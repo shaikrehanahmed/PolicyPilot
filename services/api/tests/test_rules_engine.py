@@ -455,8 +455,9 @@ class TestSchemeEligibilityAggregation:
 
     def test_pmjay_disjunctive_pathways_senior_70_plus_and_vulnerable(self):
         """Verify PM-JAY multi-pathway disjunction:
-        Pathway A: Senior Citizen (age >= 70) irrespective of income.
-        Pathway B: Vulnerable household (annual_income_inr <= 250000, category in [SC, ST, OBC, EWS]).
+        Pathway A: Senior Citizen (age >= 70) irrespective of income or occupation.
+        Pathway B: Vulnerable household (annual_income_inr <= 250000, category in [SC, ST, OBC, EWS],
+                   and configured evidence-backed eligible category or verified beneficiary status).
         """
         scheme = SchemeBase(
             slug="pm-jay",
@@ -491,43 +492,97 @@ class TestSchemeEligibilityAggregation:
                 pathway="vulnerable_household",
                 source_ref="SECC Target",
             ),
+            SchemeCriterionBase(
+                criterion_key="pmjay_eligible_category",
+                operator="==",
+                value={"v": True},
+                required=True,
+                pathway="vulnerable_household",
+                source_ref="NHA Urban Occupational Guidelines",
+            ),
         ]
 
-        # Case 1: Senior citizen aged 75 with high income (₹15,00,000) -> ELIGIBLE via senior_70_plus
+        # Case 1: Senior citizen aged 75 with high income (₹15,00,000) and GEN category -> ELIGIBLE via senior_70_plus
         wealthy_senior = NormalizedProfile(
             age=75,
             annual_income_inr=1500000,
             category="GEN",
+            occupation="retired",
         )
         res_senior = evaluate_scheme_eligibility(scheme, criteria, wealthy_senior)
         assert res_senior.overall_status == EligibilityStatus.ELIGIBLE
         assert res_senior.completeness == EvaluationCompleteness.COMPLETE
         assert "Senior 70 Plus" in res_senior.why_this_result
 
-        # Case 2: Non-senior aged 35 with low income (₹1,50,000) and SC category -> ELIGIBLE via vulnerable_household
-        young_vulnerable = NormalizedProfile(
+        # Case 2: Generic Delhi daily-wage worker (age 38, income ₹95,000, category EWS, occupation "daily-wage worker")
+        # MUST NOT be declared ELIGIBLE; returns PARTIALLY_ELIGIBLE (potential match requiring verification)
+        delhi_daily_wager = NormalizedProfile(
+            age=38,
+            annual_income_inr=95000,
+            category="EWS",
+            occupation="daily-wage worker",
+            state="DL",
+        )
+        res_delhi = evaluate_scheme_eligibility(scheme, criteria, delhi_daily_wager)
+        assert res_delhi.overall_status == EligibilityStatus.PARTIALLY_ELIGIBLE
+        assert res_delhi.completeness == EvaluationCompleteness.INCOMPLETE
+        assert "pmjay_eligible_category" in res_delhi.missing_profile_fields
+        # Verify the criterion specifically reflects NEEDS_VERIFICATION state
+        crit_res = [c for c in res_delhi.criteria_results if c.criterion_key == "pmjay_eligible_category"][0]
+        assert crit_res.status == CriterionResultState.NEEDS_VERIFICATION
+        assert "not sufficient proof" in crit_res.reason
+
+        # Case 3: Non-senior aged 35 with evidence-backed urban occupational category ("sanitation worker") -> ELIGIBLE
+        sanitation_worker = NormalizedProfile(
             age=35,
             annual_income_inr=150000,
             category="SC",
+            occupation="sanitation worker",
         )
-        res_young = evaluate_scheme_eligibility(scheme, criteria, young_vulnerable)
-        assert res_young.overall_status == EligibilityStatus.ELIGIBLE
-        assert "Vulnerable Household" in res_young.why_this_result
+        res_sanitation = evaluate_scheme_eligibility(scheme, criteria, sanitation_worker)
+        assert res_sanitation.overall_status == EligibilityStatus.ELIGIBLE
+        assert res_sanitation.completeness == EvaluationCompleteness.COMPLETE
+        assert "Vulnerable Household" in res_sanitation.why_this_result
 
-        # Case 3: Non-senior aged 35 with high income (₹12,00,000, GEN) -> NOT_ELIGIBLE (both pathways fail)
+        # Case 4: Non-senior aged 35 with construction worker occupation -> ELIGIBLE
+        construction_worker = NormalizedProfile(
+            age=35,
+            annual_income_inr=180000,
+            category="OBC",
+            occupation="construction worker",
+        )
+        res_construction = evaluate_scheme_eligibility(scheme, criteria, construction_worker)
+        assert res_construction.overall_status == EligibilityStatus.ELIGIBLE
+        assert "Vulnerable Household" in res_construction.why_this_result
+
+        # Case 5: Verified SECC/Ayushman beneficiary record (even with generic occupation) -> ELIGIBLE
+        verified_beneficiary = NormalizedProfile(
+            age=38,
+            annual_income_inr=95000,
+            category="EWS",
+            occupation="daily-wage worker",
+            is_pmjay_verified_beneficiary=True,
+        )
+        res_verified = evaluate_scheme_eligibility(scheme, criteria, verified_beneficiary)
+        assert res_verified.overall_status == EligibilityStatus.ELIGIBLE
+        assert "Vulnerable Household" in res_verified.why_this_result
+
+        # Case 6: Non-senior with high income (₹12,00,000, GEN) -> NOT_ELIGIBLE (both pathways fail)
         non_eligible = NormalizedProfile(
             age=35,
             annual_income_inr=1200000,
             category="GEN",
+            occupation="software engineer",
         )
         res_none = evaluate_scheme_eligibility(scheme, criteria, non_eligible)
         assert res_none.overall_status == EligibilityStatus.NOT_ELIGIBLE
         assert "Not eligible" in res_none.why_this_result
 
-        # Case 4: Non-senior aged 35 with missing income -> PARTIALLY_ELIGIBLE
+        # Case 7: Non-senior aged 35 with missing income -> PARTIALLY_ELIGIBLE
         missing_income = NormalizedProfile(
             age=35,
             category="SC",
+            occupation="sanitation worker",
         )
         res_missing = evaluate_scheme_eligibility(scheme, criteria, missing_income)
         assert res_missing.overall_status == EligibilityStatus.PARTIALLY_ELIGIBLE

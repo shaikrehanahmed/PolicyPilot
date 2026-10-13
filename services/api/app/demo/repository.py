@@ -313,6 +313,20 @@ _DEMO_SCHEMES: List[Dict[str, Any]] = [
                 "source_ref": "Clause 3: Target Social Beneficiaries",
                 "description": "Belongs to economically deprived social category covered under SECC/NFSA entitlement database.",
             },
+            {
+                "id": "c2200000-0000-0000-0000-000000000004",
+                "criterion_key": "pmjay_eligible_category",
+                "operator": "==",
+                "value": {"v": True},
+                "required": True,
+                "pathway": "vulnerable_household",
+                "source_ref": "NHA AB PM-JAY Operational Guidelines: 11 Notified Urban Occupational Categories & SECC Criteria",
+                "description": (
+                    "Must belong to an evidence-backed eligible occupational category (e.g. sanitation, construction, "
+                    "transport, domestic worker, street vendor) or verified SECC/NFSA deprivation record. Low income "
+                    "or generic daily-wage occupation alone is not sufficient proof and requires verification."
+                ),
+            },
         ],
         "documents": [
             {

@@ -1,8 +1,9 @@
+import os
 from pathlib import Path
 from typing import Any, List
 
 from dotenv import load_dotenv
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BASE_DIR = Path(__file__).resolve().parent.parent.parent  # services/api
@@ -13,11 +14,28 @@ load_dotenv(_BASE_DIR / ".env")
 load_dotenv(_ROOT_DIR / ".env")
 
 
+def _get_default_environment() -> str:
+    if os.getenv("RENDER") or os.getenv("RENDER_SERVICE_ID"):
+        return "production"
+    return "local"
+
+
 class Settings(BaseSettings):
     app_name: str = "PolicyPilot API"
     app_version: str = "0.1.0"
-    environment: str = "local"
+    environment: str = Field(
+        default_factory=_get_default_environment,
+        validation_alias=AliasChoices("ENVIRONMENT", "ENV", "environment", "env"),
+        description="Deployment environment name (e.g. production, staging, local)",
+    )
     debug: bool = True
+
+    @field_validator("environment", mode="before")
+    @classmethod
+    def resolve_environment(cls, v: Any) -> str:
+        if v and str(v).strip():
+            return str(v).strip().lower()
+        return _get_default_environment()
 
     # Database
     database_url: str = Field(
@@ -52,7 +70,7 @@ class Settings(BaseSettings):
 
     # AI & Embedding Providers (Updated to current active non-deprecated models)
     llm_provider: str = "gemini"
-    llm_model: str = "gemini-3.8-flash"
+    llm_model: str = "gemini-2.5-flash"
     embedding_model: str = "gemini-embedding-2"
     embedding_dim: int = 768  # Native flexible dimension supported by gemini-embedding-2
 

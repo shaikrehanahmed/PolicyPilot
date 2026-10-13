@@ -79,6 +79,24 @@ def evaluate_single_criterion(
     else:
         user_val = None
 
+    # 2b. Handle potential match requiring official database verification
+    if isinstance(user_val, dict) and user_val.get("__status__") == "needs_verification":
+        return CriterionEvaluationResult(
+            criterion_id=c_id or None,
+            criterion_key=c_key,
+            operator=op,
+            rule_target_value=target_val,
+            user_provided_value=user_val.get("__value__"),
+            status=CriterionResultState.NEEDS_VERIFICATION,
+            reason=user_val.get(
+                "__reason__",
+                f"Profile attribute '{c_key}' is a potential match but requires verification against official registry",
+            ),
+            source_ref=source_ref,
+            required=required,
+            pathway=pathway,
+        )
+
     # 3. Handle missing user profile value
     if user_val is None:
         return CriterionEvaluationResult(
@@ -294,7 +312,10 @@ def evaluate_scheme_eligibility(
             viable_missing: List[str] = []
             for pw in partial_pws:
                 for r in pathway_evaluations[pw]["unknown"]:
-                    if r.criterion_key not in viable_missing and "Missing profile attribute" in r.reason:
+                    if r.criterion_key not in viable_missing and (
+                        "Missing profile attribute" in r.reason
+                        or r.status == CriterionResultState.NEEDS_VERIFICATION
+                    ):
                         viable_missing.append(r.criterion_key)
             missing_fields = viable_missing
             pw_labels = ", ".join(f"'{p.replace('_', ' ').title()}'" for p in partial_pws)

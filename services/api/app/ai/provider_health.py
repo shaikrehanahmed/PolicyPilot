@@ -39,8 +39,9 @@ async def check_gemini_provider_health(force_refresh: bool = False) -> Tuple[str
 
         client = genai.Client(api_key=api_key)
         probe_models = [settings.llm_model]
-        if "gemini-3.5-flash" not in probe_models:
-            probe_models.append("gemini-3.5-flash")
+        for candidate in ["gemini-2.5-flash", "gemini-2.0-flash"]:
+            if candidate not in probe_models:
+                probe_models.append(candidate)
 
         probe_succeeded = False
         quota_hit = False
@@ -59,10 +60,20 @@ async def check_gemini_provider_health(force_refresh: bool = False) -> Tuple[str
                     break
             except Exception as pe:
                 err_str = str(pe)
-                logger.debug(f"Probe on {pm} failed: {type(pe).__name__}")
-                if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                err_type = type(pe).__name__
+                # Safe error diagnosis from metadata without logging keys or raw query URLs
+                if (
+                    "RESOURCE_EXHAUSTED" in err_str
+                    or "429" in err_str
+                    or "QuotaExceeded" in err_str
+                    or "quota" in err_str.lower()
+                    or "rate limit" in err_str.lower()
+                ):
                     quota_hit = True
+                    logger.info(f"Gemini probe on {pm}: quota/rate limit threshold reached ({err_type})")
                     break
+                else:
+                    logger.debug(f"Probe on {pm} failed: {err_type}")
 
         if probe_succeeded:
             _cached_status = ("connected", True)

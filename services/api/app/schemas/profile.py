@@ -2,6 +2,76 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
+PMJAY_EVIDENCE_BACKED_OCCUPATIONS = (
+    "sanitation worker",
+    "sanitation",
+    "sweeper",
+    "ragpicker",
+    "rag picker",
+    "waste picker",
+    "beggar",
+    "domestic worker",
+    "domestic",
+    "maid",
+    "housekeeper",
+    "street vendor",
+    "vendor",
+    "hawker",
+    "cobbler",
+    "construction worker",
+    "construction",
+    "plumber",
+    "mason",
+    "painter",
+    "welder",
+    "security guard",
+    "coolie",
+    "head load worker",
+    "head-load",
+    "porter",
+    "transport worker",
+    "driver",
+    "auto driver",
+    "conductor",
+    "rickshaw puller",
+    "rickshaw",
+    "cart puller",
+    "artisan",
+    "handicrafts worker",
+    "handicrafts",
+    "weaver",
+    "tailor",
+    "shop worker",
+    "delivery assistant",
+    "delivery",
+    "waiter",
+    "peon",
+    "electrician",
+    "mechanic",
+    "repair worker",
+    "assembler",
+    "washerman",
+    "washer-man",
+    "dhobi",
+    "chowkidar",
+    "guard",
+    "mali",
+    "gardener",
+)
+
+GENERIC_DAILY_WAGE_TERMS = (
+    "daily-wage",
+    "daily wage",
+    "daily wager",
+    "casual worker",
+    "casual laborer",
+    "casual labourer",
+    "laborer",
+    "labourer",
+    "worker",
+    "unskilled",
+)
+
 
 class NormalizedProfile(BaseModel):
     """Normalized citizen demographic profile.
@@ -131,6 +201,16 @@ class NormalizedProfile(BaseModel):
         description="Q15: Unirrigated agricultural land owned by household in acres (exclusion threshold >= 5.0)",
     )
 
+    # --- PM-JAY Vulnerable Household & Occupational Category Fields ---
+    is_pmjay_verified_beneficiary: Optional[bool] = Field(
+        default=None,
+        description="Whether citizen or household is verified in SECC 2011 / NFSA entitlement database or possesses Ayushman Card",
+    )
+    pmjay_eligible_category: Optional[str] = Field(
+        default=None,
+        description="Evidence-backed occupational or vulnerable category under PM-JAY guidelines",
+    )
+
     custom_attributes: Dict[str, Any] = Field(
         default_factory=dict, description="Additional domain-specific demographic attributes"
     )
@@ -139,6 +219,42 @@ class NormalizedProfile(BaseModel):
         """Helper to fetch an attribute by key, with statutory compound rule resolution,
         standard attributes, and custom_attributes fallback. Returns None if absent.
         """
+        # Compound Rule Resolution: PM-JAY General Beneficiary Pathway Resolution
+        if key == "pmjay_eligible_category":
+            if self.pmjay_eligible_category is not None:
+                return self.pmjay_eligible_category
+
+            # 1. Statutory inclusion: verified SECC / NFSA / Priority Deprivation
+            if (
+                self.is_pmjay_verified_beneficiary is True
+                or self.is_priority_deprived is True
+                or self.custom_attributes.get("is_pmjay_verified_beneficiary") is True
+                or self.custom_attributes.get("secc_enrolled") is True
+                or self.custom_attributes.get("has_ayushman_card") is True
+            ):
+                return True
+
+            occ = (self.occupation or "").lower().strip()
+            if not occ:
+                return None
+
+            # 2. Configured, evidence-backed eligible occupational categories (NHA 11 Notified Urban Categories)
+            if any(term == occ or term in occ for term in PMJAY_EVIDENCE_BACKED_OCCUPATIONS):
+                return True
+
+            # 3. Generic daily-wage or informal occupations: NOT sufficient proof -> Potential match requiring verification
+            if any(term in occ for term in GENERIC_DAILY_WAGE_TERMS):
+                return {
+                    "__status__": "needs_verification",
+                    "__value__": self.occupation,
+                    "__reason__": (
+                        f"Generic occupation '{self.occupation}' or low income alone is not sufficient proof of PM-JAY beneficiary status; "
+                        "requires verification against the SECC 2011 / Ayushman database or an authorized trade registry."
+                    ),
+                }
+
+            # 4. Other occupations: ineligible (e.g. professional, office, salaried)
+            return False
         # Compound Rule Resolution: PM-KISAN Clause 2(b)(iii) Government Employee with MTS Exception
         if key == "is_government_employee_non_mts":
             if self.is_government_employee is None:

@@ -224,6 +224,7 @@ async def test_pmjay_cashless_action_plan_no_bank_dbt():
                 "profile": {
                     "annual_income_inr": 180000,
                     "category": "OBC",
+                    "occupation": "construction worker",
                 },
             },
         )
@@ -239,6 +240,60 @@ async def test_pmjay_cashless_action_plan_no_bank_dbt():
         req_types = [d.get("requirement_type") for d in data["required_documents"]]
         assert "MANDATORY" in req_types
         assert "NOT_APPLICABLE" in req_types
+
+
+@pytest.mark.asyncio
+async def test_pmjay_delhi_daily_wage_worker_not_labeled_eligible():
+    """Verify that a generic Delhi daily-wage worker profile is NOT falsely labeled ELIGIBLE,
+    and returns PARTIALLY_ELIGIBLE requiring statutory verification.
+    """
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/eligibility/evaluate",
+            json={
+                "scheme_id": "pm-jay",
+                "profile": {
+                    "state": "DL",
+                    "age": 38,
+                    "annual_income_inr": 95000,
+                    "occupation": "daily-wage worker",
+                    "category": "EWS",
+                },
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "PARTIALLY_ELIGIBLE"
+        assert data["completeness"] == "INCOMPLETE"
+        crit_keys = [c["criterion_key"] for c in data["criteria"]]
+        assert "pmjay_eligible_category" in crit_keys
+        crit = [c for c in data["criteria"] if c["criterion_key"] == "pmjay_eligible_category"][0]
+        assert crit["status"] == "needs_verification"
+        assert "not sufficient proof" in crit["reason"]
+
+
+@pytest.mark.asyncio
+async def test_pmjay_senior_70_plus_pathway_preserved():
+    """Verify universal age-70+ senior citizen pathway is fully preserved irrespective of income."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/eligibility/evaluate",
+            json={
+                "scheme_id": "pm-jay",
+                "profile": {
+                    "state": "TS",
+                    "age": 74,
+                    "annual_income_inr": 850000,
+                    "occupation": "retired",
+                    "category": "GEN",
+                },
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ELIGIBLE"
+        assert data["completeness"] == "COMPLETE"
+        assert "Senior 70 Plus" in data["why_this_result"]
 
 
 @pytest.mark.asyncio

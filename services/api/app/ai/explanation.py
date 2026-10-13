@@ -120,7 +120,7 @@ OFFICIAL EVIDENCE EXCERPTS: {evidence_quotes or []}
         client = genai.Client(api_key=api_key)
         # Cascade through candidate flash models if primary encounters temporary capacity spikes (e.g. 503)
         candidate_models = [settings.llm_model]
-        for fallback_m in ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest"]:
+        for fallback_m in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]:
             if fallback_m not in candidate_models:
                 candidate_models.append(fallback_m)
 
