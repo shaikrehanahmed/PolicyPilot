@@ -1,0 +1,532 @@
+{
+  "audit_timestamp": "2026-10-13T13:35:31.683834+00:00",
+  "summary": {
+    "total_urls_probed": 11,
+    "accessible_verified": 10,
+    "waf_restricted": 0,
+    "network_blocked": 1,
+    "total_schemes_audited": 6,
+    "total_criteria_audited": 32,
+    "criteria_with_official_citations": 32,
+    "missing_citations": 0,
+    "total_evidence_chunks": 13
+  },
+  "url_probes": {
+    "https://pmkisan.gov.in/": {
+      "url": "https://pmkisan.gov.in/",
+      "checked_at": "2026-10-13T13:35:26.749838+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://pmkisan.gov.in/",
+      "redirected": false,
+      "elapsed_ms": 1807,
+      "is_pdf": false,
+      "content_length_bytes": 66630,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf": {
+      "url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+      "checked_at": "2026-10-13T13:35:28.559172+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+      "redirected": false,
+      "elapsed_ms": 201,
+      "is_pdf": true,
+      "content_length_bytes": 824649,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://nha.gov.in/PM-JAY": {
+      "url": "https://nha.gov.in/PM-JAY",
+      "checked_at": "2026-10-13T13:35:28.761043+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://nha.gov.in/PM-JAY",
+      "redirected": false,
+      "elapsed_ms": 102,
+      "is_pdf": false,
+      "content_length_bytes": 3843,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://www.myscheme.gov.in/schemes/ab-pmjay": {
+      "url": "https://www.myscheme.gov.in/schemes/ab-pmjay",
+      "checked_at": "2026-10-13T13:35:28.864767+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://www.myscheme.gov.in/schemes/ab-pmjay",
+      "redirected": false,
+      "elapsed_ms": 127,
+      "is_pdf": false,
+      "content_length_bytes": 41046,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://pmayg.gov.in/": {
+      "url": "https://pmayg.gov.in/",
+      "checked_at": "2026-10-13T13:35:28.992786+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://pmayg.dord.gov.in/netiayHome/home.aspx",
+      "redirected": true,
+      "elapsed_ms": 626,
+      "is_pdf": false,
+      "content_length_bytes": 173730,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://pmayg.gov.in/netiayHome/questions.html": {
+      "url": "https://pmayg.gov.in/netiayHome/questions.html",
+      "checked_at": "2026-10-13T13:35:29.621061+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://pmayg.gov.in/netiayHome/questions.html",
+      "redirected": false,
+      "elapsed_ms": 71,
+      "is_pdf": false,
+      "content_length_bytes": 22400,
+      "content_signature_detected": false,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://scholarships.gov.in/All-Scholarships": {
+      "url": "https://scholarships.gov.in/All-Scholarships",
+      "checked_at": "2026-10-13T13:35:29.692995+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://scholarships.gov.in/All-Scholarships",
+      "redirected": false,
+      "elapsed_ms": 588,
+      "is_pdf": false,
+      "content_length_bytes": 205521,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://scholarships.gov.in/scholarshipEligibility/": {
+      "url": "https://scholarships.gov.in/scholarshipEligibility/",
+      "checked_at": "2026-10-13T13:35:30.283107+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://scholarships.gov.in/scholarshipEligibility/",
+      "redirected": false,
+      "elapsed_ms": 88,
+      "is_pdf": false,
+      "content_length_bytes": 49730,
+      "content_signature_detected": false,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://rythubharosa.telangana.gov.in/Default_Eng.aspx": {
+      "url": "https://rythubharosa.telangana.gov.in/Default_Eng.aspx",
+      "checked_at": "2026-10-13T13:35:30.371486+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://rythubharosa.telangana.gov.in/Default_Eng.aspx",
+      "redirected": false,
+      "elapsed_ms": 1128,
+      "is_pdf": false,
+      "content_length_bytes": 25829,
+      "content_signature_detected": false,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://www.telangana.gov.in/": {
+      "url": "https://www.telangana.gov.in/",
+      "checked_at": "2026-10-13T13:35:31.501805+00:00",
+      "status": "ACCESSIBLE_VERIFIED",
+      "http_code": 200,
+      "final_url": "https://www.telangana.gov.in/",
+      "redirected": false,
+      "elapsed_ms": 125,
+      "is_pdf": false,
+      "content_length_bytes": 271916,
+      "content_signature_detected": true,
+      "network_blocked": false,
+      "diagnostic_note": "HTTP 200 OK \u2014 Official portal content confirmed"
+    },
+    "https://example.gov.in/draft-guideline-2026.pdf": {
+      "url": "https://example.gov.in/draft-guideline-2026.pdf",
+      "checked_at": "2026-10-13T13:35:31.630090+00:00",
+      "status": "NETWORK_BLOCKED",
+      "http_code": null,
+      "final_url": "https://example.gov.in/draft-guideline-2026.pdf",
+      "redirected": false,
+      "elapsed_ms": null,
+      "is_pdf": true,
+      "content_length_bytes": null,
+      "content_signature_detected": false,
+      "network_blocked": true,
+      "diagnostic_note": "Connection refused or blocked by local environment / sandbox (ConnectError)"
+    }
+  },
+  "schemes": [
+    {
+      "slug": "pm-kisan",
+      "name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+      "source_key": "src-pm-kisan",
+      "primary_source_url": "https://pmkisan.gov.in/",
+      "verification_status": "VERIFIED",
+      "criteria_count": 10,
+      "evidence_chunk_count": 3,
+      "document_count": 3,
+      "criteria_audit": [
+        {
+          "criterion_key": "occupation",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 2.1: Landholder Farmer Families",
+          "has_citation": true,
+          "description": "Beneficiary must be a practicing landholding farmer family (husband, wife, and minor children owning cultivable land)."
+        },
+        {
+          "criterion_key": "landholding_acres",
+          "operator": ">",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 2.2: Cultivable land ownership (No 2-Hectare Ceiling)",
+          "has_citation": true,
+          "description": "Must possess cultivable agricultural land registered in state revenue records. (The 2-hectare ceiling was abolished under revised guidelines)."
+        },
+        {
+          "criterion_key": "is_institutional_landholder",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(a): Institutional Landholders Exclusion",
+          "has_citation": true,
+          "description": "All institutional landholders are ineligible for PM-KISAN benefit."
+        },
+        {
+          "criterion_key": "has_constitutional_post_holder",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(i): Former and present holders of constitutional posts",
+          "has_citation": true,
+          "description": "Farmer families in which any member holds or held a constitutional post are excluded."
+        },
+        {
+          "criterion_key": "has_specified_elected_representative",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(ii): Specified Elected Representatives Exclusion",
+          "has_citation": true,
+          "description": "Farmer families with former/present Ministers, MPs, MLAs, MLCs, Mayors, or District Panchayat Chairpersons are excluded."
+        },
+        {
+          "criterion_key": "is_government_employee_non_mts",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(iii): Government Employees (Excluding Class IV / MTS)",
+          "has_citation": true,
+          "description": "Serving or retired regular government employees are excluded, EXCEPT Multi-Tasking Staff / Class IV / Group D employees who are explicitly exempt."
+        },
+        {
+          "criterion_key": "has_pensioner_above_10k_non_mts",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(iv): Pensioners with \u20b910,000+ monthly pension (Excluding Class IV / MTS)",
+          "has_citation": true,
+          "description": "Retired pensioners whose monthly pension is \u20b910,000 or more are excluded, EXCEPT Multi-Tasking Staff / Class IV / Group D pensioners."
+        },
+        {
+          "criterion_key": "is_income_tax_payee",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(v): Income Tax Exclusion",
+          "has_citation": true,
+          "description": "Persons who paid income tax in the last assessment year (or whose family member paid tax) are excluded."
+        },
+        {
+          "criterion_key": "has_practicing_professional",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 3(b)(vi): Registered Practicing Professionals Exclusion",
+          "has_citation": true,
+          "description": "Professionals like Doctors, Engineers, Lawyers, Chartered Accountants, and Architects registered with professional bodies and undertaking active practice are excluded."
+        },
+        {
+          "criterion_key": "is_nri_or_foreign_resident",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Statutory Landholder Operational Guidelines: Domestic Resident Requirement",
+          "has_citation": true,
+          "description": "Non-Resident Indians (NRIs) and foreign residents are ineligible for PM-KISAN benefit."
+        }
+      ]
+    },
+    {
+      "slug": "pm-jay",
+      "name": "Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana (AB-PMJAY)",
+      "source_key": "src-pm-jay",
+      "primary_source_url": "https://nha.gov.in/PM-JAY",
+      "verification_status": "VERIFIED",
+      "criteria_count": 3,
+      "evidence_chunk_count": 3,
+      "document_count": 3,
+      "criteria_audit": [
+        {
+          "criterion_key": "age",
+          "operator": ">=",
+          "required": true,
+          "pathway": "senior_70_plus",
+          "source_ref": "NHA AB PM-JAY Senior Citizen Expansion Guidelines (2024)",
+          "has_citation": true,
+          "description": "Universal health coverage of \u20b95 Lakh for all senior citizens aged 70 years and above irrespective of socio-economic status or income."
+        },
+        {
+          "criterion_key": "annual_income_inr",
+          "operator": "<=",
+          "required": true,
+          "pathway": "vulnerable_household",
+          "source_ref": "SECC Deprivation D1-D7 Criteria Proxy Threshold",
+          "has_citation": true,
+          "description": "Household annual income must not exceed \u20b92,50,000 (proxy for SECC 2011 deprivation threshold)."
+        },
+        {
+          "criterion_key": "category",
+          "operator": "IN",
+          "required": true,
+          "pathway": "vulnerable_household",
+          "source_ref": "Clause 3: Target Social Beneficiaries",
+          "has_citation": true,
+          "description": "Belongs to economically deprived social category covered under SECC/NFSA entitlement database."
+        }
+      ]
+    },
+    {
+      "slug": "pmay-g",
+      "name": "Pradhan Mantri Awaas Yojana - Gramin (PMAY-G)",
+      "source_key": "src-pmay-g",
+      "primary_source_url": "https://pmayg.gov.in/",
+      "verification_status": "VERIFIED",
+      "criteria_count": 12,
+      "evidence_chunk_count": 2,
+      "document_count": 4,
+      "criteria_audit": [
+        {
+          "criterion_key": "residence_area",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q2: Rural Residence Mandate",
+          "has_citation": true,
+          "description": "Household must reside in a rural Gram Panchayat area."
+        },
+        {
+          "criterion_key": "owns_pucca_house",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q3: Pucca House Ownership Exclusion",
+          "has_citation": true,
+          "description": "Household must not own a permanent pucca house; pucca house ownership is an exclusion."
+        },
+        {
+          "criterion_key": "lives_in_kutcha_house",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q4: Kutcha House or Houseless Condition",
+          "has_citation": true,
+          "description": "Household must reside in a kutcha house or be houseless."
+        },
+        {
+          "criterion_key": "has_more_than_two_pucca_rooms",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q5: Room Count Ceiling",
+          "has_citation": true,
+          "description": "Household must not have more than 2 pucca rooms with permanent roof."
+        },
+        {
+          "criterion_key": "has_motorized_vehicle",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q6 / Exclusion 1: Motorized Vehicle",
+          "has_citation": true,
+          "description": "Ownership of motorized two/three/four wheelers or motorized fishing boats is an exclusion."
+        },
+        {
+          "criterion_key": "has_mechanized_agri_equipment",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q7 / Exclusion 2: Mechanized Agricultural Equipment",
+          "has_citation": true,
+          "description": "Ownership of mechanized three/four wheeler agricultural equipment is an exclusion."
+        },
+        {
+          "criterion_key": "has_kcc_above_50k",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q8 / Exclusion 3: Kisan Credit Card Limit",
+          "has_citation": true,
+          "description": "Possession of Kisan Credit Card with credit limit of \u20b950,000 or above is an exclusion."
+        },
+        {
+          "criterion_key": "is_government_employee",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q9 / Exclusion 4: Government Employment",
+          "has_citation": true,
+          "description": "Households with any member as a regular government employee are excluded."
+        },
+        {
+          "criterion_key": "has_registered_non_agri_enterprise",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q10 / Exclusion 5: Registered Non-Agri Enterprise",
+          "has_citation": true,
+          "description": "Households with government-registered non-agricultural enterprises are excluded."
+        },
+        {
+          "criterion_key": "earns_above_15k_monthly",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q11 / Exclusion 6: Monthly Earning > \u20b915,000",
+          "has_citation": true,
+          "description": "Households where any member earns more than \u20b915,000 per month (\u20b91,80,000/year) are excluded."
+        },
+        {
+          "criterion_key": "is_income_tax_payee",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q12 / Exclusion 7: Income Tax",
+          "has_citation": true,
+          "description": "Households paying income tax are excluded."
+        },
+        {
+          "criterion_key": "pays_professional_tax",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Questionnaire Q13 / Exclusion 8: Professional Tax",
+          "has_citation": true,
+          "description": "Households paying professional tax are excluded."
+        }
+      ]
+    },
+    {
+      "slug": "nsp-post-matric",
+      "name": "Post-Matric Scholarship for SC Students",
+      "source_key": "src-nsp",
+      "primary_source_url": "https://scholarships.gov.in/All-Scholarships",
+      "verification_status": "VERIFIED",
+      "criteria_count": 3,
+      "evidence_chunk_count": 2,
+      "document_count": 5,
+      "criteria_audit": [
+        {
+          "criterion_key": "category",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 1.2: Eligibility Category",
+          "has_citation": true,
+          "description": "Student must belong to Scheduled Caste (SC) community."
+        },
+        {
+          "criterion_key": "annual_income_inr",
+          "operator": "<=",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 2.4: Family Income Ceiling",
+          "has_citation": true,
+          "description": "Combined parental annual income must not exceed \u20b92,50,000."
+        },
+        {
+          "criterion_key": "education_level",
+          "operator": "IN",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Clause 2.1: Recognized Post-Matriculation Course",
+          "has_citation": true,
+          "description": "Student must be enrolled in recognized post-matriculation or post-secondary courses."
+        }
+      ]
+    },
+    {
+      "slug": "rythu-bharosa",
+      "name": "Rythu Bharosa (Telangana Agriculture Investment Support)",
+      "source_key": "src-rythu",
+      "primary_source_url": "https://rythubharosa.telangana.gov.in/Default_Eng.aspx",
+      "verification_status": "VERIFIED",
+      "criteria_count": 3,
+      "evidence_chunk_count": 2,
+      "document_count": 3,
+      "criteria_audit": [
+        {
+          "criterion_key": "state",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Section 1: State Domicile Requirement",
+          "has_citation": true,
+          "description": "Landholding must be located in Telangana state."
+        },
+        {
+          "criterion_key": "occupation",
+          "operator": "==",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Section 2: Active Cultivator Status",
+          "has_citation": true,
+          "description": "Beneficiary must be an active landholder farmer cultivating land."
+        },
+        {
+          "criterion_key": "landholding_acres",
+          "operator": ">",
+          "required": true,
+          "pathway": null,
+          "source_ref": "Section 2: Pattadar Passbook Holder",
+          "has_citation": true,
+          "description": "Farmer must possess recorded cultivable agricultural land with digital Pattadar Passbook."
+        }
+      ]
+    },
+    {
+      "slug": "example-draft-scheme",
+      "name": "Example Draft Skill Development Scheme (Testing Fixture)",
+      "source_key": "src-example-draft",
+      "primary_source_url": "https://example.gov.in/draft-guideline-2026.pdf",
+      "verification_status": "UNVERIFIED_EXAMPLE",
+      "criteria_count": 1,
+      "evidence_chunk_count": 1,
+      "document_count": 1,
+      "criteria_audit": [
+        {
+          "criterion_key": "age",
+          "operator": "BETWEEN",
+          "required": true,
+          "pathway": null,
+          "source_ref": "UNVERIFIED_FIXTURE_ONLY",
+          "has_citation": true,
+          "description": "Candidate age between 18 and 35 (Unverified example fixture)."
+        }
+      ]
+    }
+  ]
+}

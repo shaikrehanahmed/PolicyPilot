@@ -1,0 +1,424 @@
+# ==============================================================================
+# PolicyPilot — Verified Seed Scheme Definitions
+# ==============================================================================
+# All verified criteria in this file are traceable to official publications.
+# Any unverified fixture is explicitly labelled UNVERIFIED_EXAMPLE.
+# ==============================================================================
+
+schemes:
+  - slug: "pm-kisan"
+    name: "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)"
+    category: "agriculture"
+    level: "CENTRAL"
+    state: null
+    department: "Ministry of Agriculture and Farmers Welfare, Govt of India"
+    description: "Centrally sponsored income support of ₹6,000 per year in three equal installments of ₹2,000 directly via DBT to all landholding farmer families across the country, irrespective of landholding size (the initial 2-hectare ceiling was abolished under revised guidelines), subject to statutory exclusion criteria."
+    active: true
+    source:
+      url: "https://pmkisan.gov.in/"
+      title: "PM-KISAN Official Scheme Portal & Operational Guidelines"
+      publisher: "Ministry of Agriculture and Farmers Welfare, Govt of India"
+      source_tier: 1
+      doc_type: "guideline"
+      verification_status: "VERIFIED"
+      last_verified_at: "2026-03-20T00:00:00Z"
+      secondary_url: "https://www.myscheme.gov.in/schemes/pm-kisan"
+      guidelines_url: "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf"
+    criteria:
+      - criterion_key: "occupation"
+        operator: "=="
+        value: {"v": "farmer"}
+        required: true
+        source_ref: "Clause 2.1: Landholder Farmer Families"
+        description: "Beneficiary must be a practicing landholding farmer family (husband, wife, and minor children owning cultivable land)."
+      - criterion_key: "landholding_acres"
+        operator: ">"
+        value: {"v": 0.0}
+        required: true
+        source_ref: "Clause 2.2: Cultivable land ownership (No 2-Hectare Ceiling)"
+        description: "Must possess cultivable agricultural land registered in state revenue records. (The 2-hectare ceiling was abolished under revised guidelines)."
+      - criterion_key: "is_institutional_landholder"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(a): Institutional Landholders Exclusion"
+        description: "All institutional landholders are ineligible for PM-KISAN benefit."
+      - criterion_key: "has_constitutional_post_holder"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(i): Former and present holders of constitutional posts"
+        description: "Farmer families in which any member holds or held a constitutional post are excluded."
+      - criterion_key: "has_specified_elected_representative"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(ii): Specified Elected Representatives Exclusion"
+        description: "Farmer families with former/present Ministers, MPs, MLAs, MLCs, Mayors, or District Panchayat Chairpersons are excluded."
+      - criterion_key: "is_government_employee_non_mts"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(iii): Government Employees (Excluding Class IV / MTS)"
+        description: "Serving or retired regular government employees are excluded, EXCEPT Multi-Tasking Staff / Class IV / Group D employees who are explicitly exempt."
+      - criterion_key: "has_pensioner_above_10k_non_mts"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(iv): Pensioners with ₹10,000+ monthly pension (Excluding Class IV / MTS)"
+        description: "Retired pensioners whose monthly pension is ₹10,000 or more are excluded, EXCEPT Multi-Tasking Staff / Class IV / Group D pensioners."
+      - criterion_key: "is_income_tax_payee"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(v): Income Tax Exclusion"
+        description: "Persons who paid income tax in the last assessment year (or whose family member paid tax) are excluded."
+      - criterion_key: "has_practicing_professional"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Clause 3(b)(vi): Registered Practicing Professionals Exclusion"
+        description: "Professionals like Doctors, Engineers, Lawyers, Chartered Accountants, and Architects registered with professional bodies and undertaking active practice are excluded."
+      - criterion_key: "is_nri_or_foreign_resident"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Statutory Landholder Operational Guidelines: Domestic Resident Requirement"
+        description: "Non-Resident Indians (NRIs) and foreign residents are ineligible for PM-KISAN benefit."
+    documents:
+      - kind: "identity"
+        name: "Aadhaar Card"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Required for mandatory e-KYC and identity verification under Clause 3."
+      - kind: "land_record"
+        name: "Land Ownership Record (Khata/RoR/Pattadar Passbook)"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Proves legal ownership of agricultural land in state revenue records."
+      - kind: "banking"
+        name: "Aadhaar-seeded Bank Account Passbook"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Required for Direct Benefit Transfer (DBT) installment credits via PFMS."
+
+  - slug: "pm-jay"
+    name: "Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana (AB-PMJAY)"
+    category: "healthcare"
+    level: "CENTRAL"
+    state: null
+    department: "National Health Authority, Govt of India"
+    description: "Health cover of ₹5,00,000 per family per year on family floater basis for secondary and tertiary care hospitalization to bottom 40% vulnerable families based on SECC 2011 deprivation criteria, AND universal ₹5 Lakh coverage to all senior citizens aged 70 and above irrespective of socio-economic status or income. 100% cashless hospitalization at empaneled hospitals across India (no bank account or DBT required)."
+    active: true
+    source:
+      url: "https://nha.gov.in/PM-JAY"
+      title: "National Health Authority PM-JAY Official Portal & Operational Guidelines"
+      publisher: "National Health Authority, Govt of India"
+      source_tier: 1
+      doc_type: "notification"
+      verification_status: "VERIFIED"
+      last_verified_at: "2026-03-20T00:00:00Z"
+      secondary_url: "https://www.myscheme.gov.in/schemes/ab-pmjay"
+      senior_faq_url: "https://nha.gov.in/img/resources/English_FAQs_related_to_the_benefits_for_senior_citizens.pdf"
+    criteria:
+      # Pathway 1: Senior Citizen Universal Route (Age 70+)
+      - criterion_key: "age"
+        operator: ">="
+        value: {"v": 70}
+        required: true
+        pathway: "senior_70_plus"
+        source_ref: "NHA AB PM-JAY Senior Citizen Expansion Guidelines (2024)"
+        description: "Universal health coverage of ₹5 Lakh for all senior citizens aged 70 years and above irrespective of socio-economic status or income."
+
+      # Pathway 2: Socio-Economic Vulnerable Household Route (SECC / NFSA)
+      - criterion_key: "annual_income_inr"
+        operator: "<="
+        value: {"v": 250000}
+        required: true
+        pathway: "vulnerable_household"
+        source_ref: "SECC Deprivation D1-D7 Criteria Proxy Threshold"
+        description: "Household annual income must not exceed ₹2,50,000 (proxy for SECC 2011 deprivation threshold)."
+      - criterion_key: "category"
+        operator: "IN"
+        value: {"v": ["SC", "ST", "OBC", "EWS"]}
+        required: true
+        pathway: "vulnerable_household"
+        source_ref: "Clause 3: Target Social Beneficiaries"
+        description: "Belongs to economically deprived social category covered under SECC/NFSA entitlement database."
+    documents:
+      - kind: "identity"
+        name: "Aadhaar Card or Alternative Government Photo ID (Voter ID / Ration Card)"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Any valid government photo ID is accepted for Ayushman Card generation; Aadhaar is preferred but alternative photo IDs are permitted."
+      - kind: "ration_card"
+        name: "Ration Card / SECC Household Registration Slip / Age Proof"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Verifies family inclusion in SECC 2011 / NFSA eligible database, or age 70+ identity for the senior citizen pathway."
+      - kind: "banking"
+        name: "Bank Account Details"
+        required: false
+        requirement_type: "NOT_APPLICABLE"
+        description: "Not required — PM-JAY is a 100% cashless hospitalization scheme (no direct bank cash transfer or DBT needed)."
+
+  - slug: "pmay-g"
+    name: "Pradhan Mantri Awaas Yojana - Gramin (PMAY-G)"
+    category: "housing"
+    level: "CENTRAL"
+    state: null
+    department: "Ministry of Rural Development, Govt of India"
+    description: "Financial assistance of ₹1,20,000 in plains and ₹1,30,000 in hilly/difficult areas for construction of pucca house to rural houseless families and families living in 0, 1 or 2 rooms with kutcha wall and kutcha roof, plus MGNREGA labor convergence and SBM toilet grant, subject to the official 15-question eligibility and exclusion framework."
+    active: true
+    source:
+      url: "https://pmayg.gov.in/"
+      title: "Pradhan Mantri Awaas Yojana - Gramin Official Framework & Questionnaire"
+      publisher: "Ministry of Rural Development, Govt of India"
+      source_tier: 1
+      doc_type: "guideline"
+      verification_status: "VERIFIED"
+      last_verified_at: "2026-03-20T00:00:00Z"
+      secondary_url: "https://www.myscheme.gov.in/schemes/pmay-g"
+      questionnaire_url: "https://pmayg.gov.in/netiayHome/questions.html"
+    criteria:
+      - criterion_key: "residence_area"
+        operator: "=="
+        value: {"v": "rural"}
+        required: true
+        source_ref: "Questionnaire Q2: Rural Residence Mandate"
+        description: "Household must reside in a rural Gram Panchayat area."
+      - criterion_key: "owns_pucca_house"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q3: Pucca House Ownership Exclusion"
+        description: "Household must not own a permanent pucca house; pucca house ownership is an exclusion."
+      - criterion_key: "lives_in_kutcha_house"
+        operator: "=="
+        value: {"v": true}
+        required: true
+        source_ref: "Questionnaire Q4: Kutcha House or Houseless Condition"
+        description: "Household must reside in a kutcha house or be houseless."
+      - criterion_key: "has_more_than_two_pucca_rooms"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q5: Room Count Ceiling"
+        description: "Household must not have more than 2 pucca rooms with permanent roof."
+      - criterion_key: "has_motorized_vehicle"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q6 / Exclusion 1: Motorized Vehicle"
+        description: "Ownership of motorized two/three/four wheelers or motorized fishing boats is an exclusion."
+      - criterion_key: "has_mechanized_agri_equipment"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q7 / Exclusion 2: Mechanized Agricultural Equipment"
+        description: "Ownership of mechanized three/four wheeler agricultural equipment is an exclusion."
+      - criterion_key: "has_kcc_above_50k"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q8 / Exclusion 3: Kisan Credit Card Limit"
+        description: "Possession of Kisan Credit Card with credit limit of ₹50,000 or above is an exclusion."
+      - criterion_key: "is_government_employee"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q9 / Exclusion 4: Government Employment"
+        description: "Households with any member as a regular government employee are excluded."
+      - criterion_key: "has_registered_non_agri_enterprise"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q10 / Exclusion 5: Registered Non-Agri Enterprise"
+        description: "Households with government-registered non-agricultural enterprises are excluded."
+      - criterion_key: "earns_above_15k_monthly"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q11 / Exclusion 6: Monthly Earning > ₹15,000"
+        description: "Households where any member earns more than ₹15,000 per month (₹1,80,000/year) are excluded."
+      - criterion_key: "is_income_tax_payee"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q12 / Exclusion 7: Income Tax"
+        description: "Households paying income tax are excluded."
+      - criterion_key: "pays_professional_tax"
+        operator: "=="
+        value: {"v": false}
+        required: true
+        source_ref: "Questionnaire Q13 / Exclusion 8: Professional Tax"
+        description: "Households paying professional tax are excluded."
+    documents:
+      - kind: "identity"
+        name: "Aadhaar Card"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Identity verification for adult household beneficiaries."
+      - kind: "residence"
+        name: "Land/House Site Certificate or Gram Panchayat Consent"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Proves legal possession of rural site for pucca house construction."
+      - kind: "employment"
+        name: "MGNREGA Job Card"
+        required: false
+        requirement_type: "CONDITIONALLY_REQUIRED"
+        description: "Required for convergence of 90/95 days unskilled construction labor wages."
+      - kind: "banking"
+        name: "Aadhaar-linked Bank Account Passbook"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "For DBT disbursal of construction milestone tranches upon geo-tagged inspection."
+
+  - slug: "nsp-post-matric"
+    name: "Post-Matric Scholarship for SC Students"
+    category: "education"
+    level: "CENTRAL"
+    state: null
+    department: "Ministry of Social Justice and Empowerment, Govt of India"
+    description: "Centrally Sponsored Post-Matric Scholarship Scheme for SC Students studying in recognized post-matriculation or post-secondary courses with parental annual income up to ₹2,50,000, covering tuition reimbursement and maintenance allowance."
+    active: true
+    source:
+      url: "https://scholarships.gov.in/All-Scholarships"
+      title: "National Scholarship Portal — Post-Matric Scholarship for SC Students Guidelines"
+      publisher: "Ministry of Social Justice and Empowerment, Govt of India"
+      source_tier: 1
+      doc_type: "notification"
+      verification_status: "VERIFIED"
+      last_verified_at: "2026-03-20T00:00:00Z"
+      secondary_url: "https://scholarships.gov.in/"
+      eligibility_checker_url: "https://scholarships.gov.in/scholarshipEligibility/"
+    criteria:
+      - criterion_key: "category"
+        operator: "=="
+        value: {"v": "SC"}
+        required: true
+        source_ref: "Clause 1.2: Eligibility Category"
+        description: "Student must belong to Scheduled Caste (SC) community."
+      - criterion_key: "annual_income_inr"
+        operator: "<="
+        value: {"v": 250000}
+        required: true
+        source_ref: "Clause 2.4: Family Income Ceiling"
+        description: "Combined parental annual income must not exceed ₹2,50,000."
+      - criterion_key: "education_level"
+        operator: "IN"
+        value: {"v": ["post-matric", "undergraduate", "postgraduate", "diploma", "doctorate"]}
+        required: true
+        source_ref: "Clause 2.1: Recognized Post-Matriculation Course"
+        description: "Student must be enrolled in recognized post-matriculation or post-secondary courses."
+    documents:
+      - kind: "caste"
+        name: "Caste Certificate (SC) issued by Revenue Authority"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "SC certificate issued by authorized Revenue Authority (Tahsildar/SDM)."
+      - kind: "income"
+        name: "Income Certificate for Current Financial Year"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Proves annual parental/family income is within ₹2,50,000 ceiling."
+      - kind: "educational"
+        name: "Class 10 / Matriculation Passing Certificate"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Verifies qualifying matriculation completion for post-secondary study."
+      - kind: "bonafide"
+        name: "Bonafide Student Certificate / College Admission Receipt"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Issued by registered college/institution verifying regular enrollment."
+      - kind: "banking"
+        name: "Aadhaar-seeded Student Bank Account"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Bank account in applicant's name for direct scholarship credit via PFMS."
+
+  - slug: "rythu-bharosa"
+    aliases: ["rythu-bandhu"]
+    name: "Rythu Bharosa (Telangana Agriculture Investment Support)"
+    category: "agriculture"
+    level: "STATE"
+    state: "TS"
+    department: "Department of Agriculture, Govt of Telangana"
+    description: "Agricultural investment assistance of ₹12,000 per acre annually (₹6,000 per acre per season for Kharif and Rabi) provided by the Government of Telangana to landholding farmers possessing digital Pattadar Passbooks for the purchase of farming inputs (enhanced from former Rythu Bandhu)."
+    active: true
+    source:
+      url: "https://rythubharosa.telangana.gov.in/Default_Eng.aspx"
+      title: "Government of Telangana Rythu Bharosa Official Portal"
+      publisher: "Department of Agriculture, Government of Telangana"
+      source_tier: 1
+      doc_type: "guideline"
+      verification_status: "VERIFIED"
+      last_verified_at: "2026-03-20T00:00:00Z"
+      secondary_url: "https://www.telangana.gov.in/"
+    criteria:
+      - criterion_key: "state"
+        operator: "=="
+        value: {"v": "TS"}
+        required: true
+        source_ref: "Section 1: State Domicile Requirement"
+        description: "Landholding must be located in Telangana state."
+      - criterion_key: "occupation"
+        operator: "=="
+        value: {"v": "farmer"}
+        required: true
+        source_ref: "Section 2: Active Cultivator Status"
+        description: "Beneficiary must be an active landholder farmer cultivating land."
+      - criterion_key: "landholding_acres"
+        operator: ">"
+        value: {"v": 0.0}
+        required: true
+        source_ref: "Section 2: Pattadar Passbook Holder"
+        description: "Farmer must possess recorded cultivable agricultural land with digital Pattadar Passbook."
+    documents:
+      - kind: "land_record"
+        name: "Telangana Pattadar Passbook (Dharani/CCLA Portal)"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Digital record with Pattadar Passbook (PPB) number and recorded survey numbers."
+      - kind: "identity"
+        name: "Aadhaar Card of Landholder"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Identity verification linked to the digital land title."
+      - kind: "banking"
+        name: "Bank Account Passbook"
+        required: true
+        requirement_type: "MANDATORY"
+        description: "Account linked to Pattadar passbook for seasonal input subsidy credits."
+
+  - slug: "example-draft-scheme"
+    name: "Example Draft Skill Development Scheme (Testing Fixture)"
+    category: "skills"
+    level: "CENTRAL"
+    state: null
+    department: "Ministry of Skill Development (Unverified Draft)"
+    description: "Unverified test fixture used to ensure seed loading refuses to present unverified criteria as verified."
+    active: false
+    source:
+      url: "https://example.gov.in/draft-guideline-2026.pdf"
+      title: "Draft Discussion Paper (Not Gazetted)"
+      publisher: "Unverified Example Publisher"
+      source_tier: 5
+      doc_type: "draft"
+      verification_status: "UNVERIFIED_EXAMPLE"
+      last_verified_at: "2026-01-01T00:00:00Z"
+    criteria:
+      - criterion_key: "age"
+        operator: "BETWEEN"
+        value: {"v": [18, 35]}
+        required: true
+        source_ref: "UNVERIFIED_FIXTURE_ONLY"
+        description: "Candidate age between 18 and 35 (Unverified example fixture)."
+    documents:
+      - kind: "identity"
+        name: "Age Proof Document"
+        required: true
+        requirement_type: "UNVERIFIED"
+        description: "Unverified testing document fixture."

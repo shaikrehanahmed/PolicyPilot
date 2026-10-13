@@ -1,0 +1,33 @@
+# ==============================================================================
+# PolicyPilot — Local Development Docker Compose
+# Provides PostgreSQL 16 with pgvector for local database connectivity.
+#
+# Usage:
+#   docker compose -f deployment/docker-compose.yml up -d
+#   docker compose -f deployment/docker-compose.yml down
+#   docker compose -f deployment/docker-compose.yml logs db
+# ==============================================================================
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: policypilot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: policypilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - policypilot_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d policypilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  policypilot_pgdata:
+    driver: local
