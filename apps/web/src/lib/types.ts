@@ -58,9 +58,9 @@ export interface Scheme {
   active: boolean;
   source_title?: string;
   source_url?: string;
-  verification_status: string;
-  criteria_count: number;
-  documents_count: number;
+  verification_status?: string;
+  criteria_count?: number;
+  documents_count?: number;
   criteria?: SchemeCriterion[];
   documents?: SchemeDocument[];
   evidence_chunks?: EvidenceChunk[];

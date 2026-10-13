@@ -9,17 +9,50 @@ import {
   WorkflowRunResponse,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export function getApiBase(): string {
+  const envUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
+  if (typeof window !== "undefined") {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    if (isLocalhost) {
+      return envUrl || "http://localhost:8000";
+    }
+    // In production or preview deployments on Vercel, always route to Render backend if envUrl is missing or localhost
+    if (!envUrl || envUrl.includes("localhost") || envUrl.includes("127.0.0.1")) {
+      return "https://policypilot-ajnf.onrender.com";
+    }
+    return envUrl;
+  }
+  // Server-side
+  if (envUrl && !envUrl.includes("localhost")) {
+    return envUrl;
+  }
+  return process.env.NODE_ENV === "production"
+    ? "https://policypilot-ajnf.onrender.com"
+    : envUrl || "http://localhost:8000";
+}
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
+  const apiBase = getApiBase();
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${apiBase}${cleanEndpoint}`;
+
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  const method = (options.method || "GET").toUpperCase();
+  // Only set Content-Type if a body is present to avoid triggering CORS preflight on GET/HEAD
+  if (options.body && method !== "GET" && method !== "HEAD") {
+    headers["Content-Type"] = "application/json";
+  }
+
   try {
     const res = await fetch(url, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
+      headers,
     });
 
     if (!res.ok) {
@@ -37,8 +70,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     return await res.json();
   } catch (err: unknown) {
-    console.error(`[API Error] ${endpoint}:`, err);
-    throw err;
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[API Error] ${endpoint} (${url}):`, err);
+    if (rawMsg.includes("Failed to fetch") || rawMsg.includes("NetworkError")) {
+      throw new Error(
+        `Unable to reach PolicyPilot backend at ${apiBase}. Please verify the server is running and network is active.`
+      );
+    }
+    throw err instanceof Error ? err : new Error(rawMsg);
   }
 }
 

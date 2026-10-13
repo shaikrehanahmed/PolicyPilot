@@ -62,6 +62,7 @@ class DiscoverResultItem(BaseModel):
     relevance_rationale: str
     retrieval_mode: str
     source: Optional[Dict[str, Any]] = None
+    verification_status: str = "VERIFIED"
     criteria_count: int = 0
     documents_count: int = 0
 
@@ -158,6 +159,11 @@ async def discover_schemes(payload: DiscoverRequest) -> List[DiscoverResultItem]
                 relevance_rationale=d.get("relevance_rationale", ""),
                 retrieval_mode=d.get("retrieval_mode", "lexical_category_match"),
                 source=d.get("source"),
+                verification_status=(
+                    d.get("source", {}).get("verification_status", "VERIFIED")
+                    if isinstance(d.get("source"), dict)
+                    else "VERIFIED"
+                ),
                 criteria_count=len(d.get("criteria", [])),
                 documents_count=len(d.get("documents", [])),
             )

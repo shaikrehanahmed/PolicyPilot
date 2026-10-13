@@ -7,6 +7,9 @@ import {
   Sparkles,
   Building2,
   ArrowRight,
+  AlertTriangle,
+  RotateCw,
+  Info,
 } from "lucide-react";
 import { discoverSchemes, fetchSchemes } from "@/lib/api";
 import { Scheme } from "@/lib/types";
@@ -24,21 +27,27 @@ export default function SchemesPage() {
   const { profile } = useProfile();
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isRankedForProfile, setIsRankedForProfile] = useState(false);
+  const [rankingNotice, setRankingNotice] = useState<string | null>(null);
 
   const loadAllSchemes = async () => {
     setLoading(true);
+    setError(null);
     setIsRankedForProfile(false);
+    setRankingNotice(null);
     try {
       const data = await fetchSchemes({
         category: activeCategory !== "all" ? activeCategory : undefined,
-        search: searchQuery || undefined,
+        search: searchQuery.trim() || undefined,
       });
       setSchemes(data);
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      console.error("Failed to load schemes:", e);
+      const msg = e instanceof Error ? e.message : "Failed to connect to schemes service";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -46,12 +55,32 @@ export default function SchemesPage() {
 
   const handleRankForProfile = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await discoverSchemes(profile, profile.goal);
-      setSchemes(data);
-      setIsRankedForProfile(true);
-    } catch (e) {
-      console.error(e);
+      if (!data || data.length === 0) {
+        setRankingNotice(
+          `No schemes exclusively matched criteria for ${profile.occupation || "your profile"}. Retaining full catalog.`
+        );
+        const all = await fetchSchemes();
+        setSchemes(all);
+        setIsRankedForProfile(false);
+      } else {
+        setSchemes(data);
+        setIsRankedForProfile(true);
+        setRankingNotice(null);
+      }
+    } catch (e: unknown) {
+      console.error("Profile ranking error:", e);
+      const msg = e instanceof Error ? e.message : "Profile ranking failed";
+      setRankingNotice(`Could not complete custom ranking: ${msg}. Displaying full scheme catalog.`);
+      try {
+        const all = await fetchSchemes();
+        setSchemes(all);
+      } catch {
+        // preserve existing list if fallback fails
+      }
+      setIsRankedForProfile(false);
     } finally {
       setLoading(false);
     }
@@ -60,19 +89,27 @@ export default function SchemesPage() {
   useEffect(() => {
     let ignore = false;
     async function load() {
+      setLoading(true);
+      setError(null);
+      setIsRankedForProfile(false);
+      setRankingNotice(null);
       try {
         const data = await fetchSchemes({
           category: activeCategory !== "all" ? activeCategory : undefined,
-          search: searchQuery || undefined,
+          search: searchQuery.trim() || undefined,
         });
         if (!ignore) {
           setSchemes(data);
-          setIsRankedForProfile(false);
+          setError(null);
           setLoading(false);
         }
-      } catch (e) {
-        console.error(e);
-        if (!ignore) setLoading(false);
+      } catch (e: unknown) {
+        console.error("Failed to fetch schemes:", e);
+        if (!ignore) {
+          const msg = e instanceof Error ? e.message : "Failed to load schemes";
+          setError(msg);
+          setLoading(false);
+        }
       }
     }
     load();
@@ -91,6 +128,11 @@ export default function SchemesPage() {
           </h1>
           <p className="text-sm text-[#667085] mt-1">
             Browse and match central and state welfare initiatives with verified Gazette rules.
+            {!loading && !error && (
+              <span className="font-semibold text-indigo-700 ml-1.5">
+                ({schemes.length} active {schemes.length === 1 ? "scheme" : "schemes"} available)
+              </span>
+            )}
           </p>
         </div>
 
@@ -98,7 +140,8 @@ export default function SchemesPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRankForProfile}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold shadow-xs transition-colors"
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-indigo-600" />
             Rank for My Profile ({profile.occupation || "Farmer"}, {profile.state || "TS"})
@@ -114,7 +157,7 @@ export default function SchemesPage() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 activeCategory === cat.id
                   ? "bg-[#4F46E5] text-white shadow-xs"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200/80"
@@ -141,19 +184,55 @@ export default function SchemesPage() {
 
       {/* Status Notice if Ranked for Profile */}
       {isRankedForProfile && (
-        <div className="bg-indigo-50/80 border border-indigo-200 rounded-lg p-3 text-xs flex items-center justify-between">
+        <div className="bg-indigo-50/80 border border-indigo-200 rounded-lg p-3 text-xs flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2 text-indigo-900 font-medium">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
             <span>
               Schemes ranked specifically for your profile:{" "}
-              <strong>{profile.occupation}</strong> in <strong>{profile.state}</strong>.
+              <strong>{profile.occupation || "Citizen"}</strong> in <strong>{profile.state || "India"}</strong>.
             </span>
           </div>
           <button
             onClick={loadAllSchemes}
-            className="text-xs text-indigo-700 hover:text-indigo-900 underline font-semibold"
+            className="text-xs text-indigo-700 hover:text-indigo-900 underline font-semibold cursor-pointer"
           >
             Reset Filters
+          </button>
+        </div>
+      )}
+
+      {/* Notice if ranking fell back */}
+      {rankingNotice && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2 text-amber-900 font-medium">
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{rankingNotice}</span>
+          </div>
+          <button
+            onClick={() => setRankingNotice(null)}
+            className="text-xs text-amber-700 hover:text-amber-900 font-semibold cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Error State Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-900">Backend Connection Error</p>
+              <p className="text-xs text-red-700 mt-0.5 leading-relaxed">{error}</p>
+            </div>
+          </div>
+          <button
+            onClick={loadAllSchemes}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-xs font-semibold shadow-xs transition-colors shrink-0 cursor-pointer"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            Retry Connection
           </button>
         </div>
       )}
@@ -162,11 +241,11 @@ export default function SchemesPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-56 bg-gray-100 rounded-xl animate-pulse" />
+            <div key={i} className="h-60 bg-gray-100/80 rounded-xl animate-pulse border border-gray-200/50" />
           ))}
         </div>
-      ) : schemes.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 space-y-3">
+      ) : schemes.length === 0 && !error ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 space-y-3 shadow-xs">
           <p className="text-base font-semibold text-gray-800">No schemes found matching your criteria.</p>
           <p className="text-xs">Try selecting a different category or clearing the search query.</p>
           <button
@@ -175,81 +254,90 @@ export default function SchemesPage() {
               setSearchQuery("");
               loadAllSchemes();
             }}
-            className="text-xs px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md font-medium"
+            className="text-xs px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md font-medium cursor-pointer transition-colors"
           >
             Reset all filters
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {schemes.map((scheme: Scheme) => (
-            <div
-              key={scheme.id}
-              className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div className="space-y-4">
-                {/* Badges */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
-                      {scheme.category}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700">
-                      {scheme.level} {scheme.state ? `(${scheme.state})` : ""}
+          {schemes.map((scheme: Scheme) => {
+            const verificationStatus =
+              scheme.verification_status ||
+              (scheme.source as { verification_status?: string } | undefined)?.verification_status ||
+              "VERIFIED";
+            const criteriaCount = scheme.criteria_count ?? (scheme.criteria?.length || 0);
+            const documentsCount = scheme.documents_count ?? (scheme.documents?.length || 0);
+
+            return (
+              <div
+                key={scheme.id}
+                className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  {/* Badges */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                        {scheme.category}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700">
+                        {scheme.level} {scheme.state ? `(${scheme.state})` : ""}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                        verificationStatus === "VERIFIED"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      {verificationStatus}
                     </span>
                   </div>
 
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                      scheme.verification_status === "VERIFIED"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {scheme.verification_status}
-                  </span>
-                </div>
+                  {/* Title & Ministry */}
+                  <div>
+                    <h2 className="font-bold text-base text-[#17213F] leading-snug">
+                      {scheme.name}
+                    </h2>
+                    <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
+                      <Building2 className="w-3 h-3 text-gray-400 shrink-0" />
+                      {scheme.department || "Government of India"}
+                    </p>
+                  </div>
 
-                {/* Title & Ministry */}
-                <div>
-                  <h2 className="font-bold text-base text-[#17213F] leading-snug">
-                    {scheme.name}
-                  </h2>
-                  <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-gray-400" />
-                    {scheme.department || "Government of India"}
+                  {/* Description */}
+                  <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
+                    {scheme.description}
                   </p>
+
+                  {/* Match Rationale if available */}
+                  {scheme.relevance_rationale && (
+                    <div className="bg-indigo-50/60 rounded-lg p-2.5 text-[11px] text-indigo-900 border border-indigo-100">
+                      <span className="font-semibold block text-indigo-950">Match Rationale:</span>
+                      {scheme.relevance_rationale}
+                    </div>
+                  )}
                 </div>
 
-                {/* Description */}
-                <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
-                  {scheme.description}
-                </p>
-
-                {/* Match Rationale if available */}
-                {scheme.relevance_rationale && (
-                  <div className="bg-indigo-50/60 rounded-lg p-2.5 text-[11px] text-indigo-900 border border-indigo-100">
-                    <span className="font-semibold block text-indigo-950">Match Rationale:</span>
-                    {scheme.relevance_rationale}
-                  </div>
-                )}
+                {/* Bottom Action */}
+                <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[11px] text-gray-500 font-medium">
+                    {criteriaCount} Rules • {documentsCount} Docs
+                  </span>
+                  <Link
+                    href={`/schemes/${scheme.slug}`}
+                    className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 group"
+                  >
+                    View Eligibility & Evidence
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
               </div>
-
-              {/* Bottom Action */}
-              <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-[11px] text-gray-500 font-medium">
-                  {scheme.criteria_count} Rules • {scheme.documents_count} Docs
-                </span>
-                <Link
-                  href={`/schemes/${scheme.slug}`}
-                  className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 group"
-                >
-                  View Eligibility & Evidence
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

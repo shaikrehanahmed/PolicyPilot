@@ -64,6 +64,7 @@ function SchemeDetailContent() {
   const [actionPlan, setActionPlan] = useState<ActionPlan | null>(null);
   const [selectedEvidence, setSelectedEvidence] = useState<SelectedEvidenceItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Workflow agent state
   const [workflowRunning, setWorkflowRunning] = useState(false);
@@ -73,6 +74,7 @@ function SchemeDetailContent() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
+      setError(null);
       try {
         const s = await fetchScheme(schemeSlug);
         setScheme(s);
@@ -84,8 +86,9 @@ function SchemeDetailContent() {
         // Generate action plan
         const plan = await generateActionPlan(schemeSlug, profile);
         setActionPlan(plan);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Failed to load scheme evaluation:", e);
+        setError(e instanceof Error ? e.message : "Failed to load scheme details");
       } finally {
         setLoading(false);
       }
@@ -113,6 +116,32 @@ function SchemeDetailContent() {
         <p className="text-sm text-gray-500 font-medium">
           Executing deterministic rules and retrieving Gazette citations...
         </p>
+      </div>
+    );
+  }
+
+  if (error && !scheme) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center space-y-4 shadow-xs">
+          <AlertTriangle className="w-8 h-8 text-red-600 mx-auto" />
+          <h2 className="text-lg font-bold text-red-900">Failed to load scheme details</h2>
+          <p className="text-xs text-red-700 max-w-md mx-auto">{error}</p>
+          <div className="pt-2 flex justify-center gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 cursor-pointer shadow-xs"
+            >
+              Retry
+            </button>
+            <Link
+              href="/schemes"
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 shadow-xs"
+            >
+              ← Back to Discovery
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
