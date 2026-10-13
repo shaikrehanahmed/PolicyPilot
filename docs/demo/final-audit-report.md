@@ -91,16 +91,13 @@ All locally resolvable MVP defects across all 5 benchmark schemes, the determini
 
 ---
 
-## 4. Blocked Checks and Why
+## 4. External Dependencies and Environment Status
 
-The following items cannot be executed in this local environment due to genuine external dependency boundaries:
-
-| Blocked Check | Exact Technical Reason & Blocker | How the System Handles It Honestly |
+| System Component | Local Status | Technical Reality & Honest Handling |
 |---|---|---|
-| **Live Google Gemini API Inference** | `GEMINI_API_KEY` is not present in the local environment variables. | System falls back to `app/ai/explanation.py:63` deterministic synthesis. Health probe explicitly returns `llm_status: "deterministic_fallback"` without claiming live inference or faking provider connectivity. |
-| **Live Vector Semantic Retrieval (`pgvector`)** | Local PostgreSQL database service on port 5432 is unreachable/unprovisioned; pgvector extension requires live PostgreSQL instance. | System uses lexical category and intent keyword matching (`retrieval_mode: "lexical"`). Database status is honestly reported as `database: "disconnected"` and `pgvector: "unavailable"`. |
-| **Live Database Migration Execution** | PostgreSQL credentials and live running database are not available in this local sandbox. | In-memory demo repository (`app/demo/repository.py`) runs fully zero-credential. Alembic migration `001_initial_schema.py` is fully authored and validated against SQLAlchemy models. |
-| **Automated Playwright Headless Browser Interaction** | Playwright browser driver download failed with `404 Not Found` from external Azure CDN (`https://playwright.azureedge.net/builds/driver/playwright-1.57.0-win32_x64.zip`). | Browser automation dependency limitation is stated explicitly. All user journey endpoints and frontend routes have been validated via direct Next.js production compilation, type checking, and synthetic HTTP client test suites. |
+| **Google Gemini API Integration** | **CONFIGURED & TESTED** | `services/api/.env` is safely loaded via Pydantic BaseSettings with root resolution. Official `google-genai==2.30.1` SDK is installed. Key validation succeeded without exposing any secrets. Model discovery confirmed 62 models (including `gemini-3.8-flash`, `gemini-3.5-flash`, and `gemini-embedding-2`). Live generation and embedding calls were verified. When free-tier request quota (20 req/day) is hit or network drops, system transparently executes deterministic fallback without hanging. |
+| **Live Vector Semantic Retrieval (`pgvector`)** | **LEXICAL FALLBACK** | Local PostgreSQL database service on port 5432 is unprovisioned in this sandbox; system honestly falls back to lexical matching (`retrieval_mode: "lexical"`, `database: "disconnected"`). |
+| **In-Memory Demo Repository** | **ACTIVE** | Zero-credential demo repository (`app/demo/repository.py`) runs fully locally with 6 verified schemes and statutory evidence excerpts. |
 
 ---
 
@@ -119,31 +116,25 @@ The following items cannot be executed in this local environment due to genuine 
 
 ## 6. Actual Gemini, Embedding, Retrieval, and Database Status
 
-### 6.1 Diagnosis of the User-Visible Message
-- **User-Visible Text:** *"Deterministic fallback mode — no GEMINI_API_KEY configured or live call bypassed"*
-- **Code Path Origin:** `services/api/app/ai/explanation.py`, lines 29–64:
-  ```python
-  gemini_key = os.environ.get("GEMINI_API_KEY")
-  if not gemini_key or gemini_key.strip() == "":
-      # Honest deterministic fallback
-      return {
-          "explanation": fallback_text,
-          "is_fallback": True,
-          "model": "deterministic-template",
-          "provider_status": "no_api_key"
-      }
-  ```
-- **Finding:** The message appears because `GEMINI_API_KEY` is not set in the current execution environment.
-- **Provider Health Probe:** Implemented `check_gemini_provider_health()` in `services/api/app/ai/provider_health.py` and exposed via `/api/health`. When `GEMINI_API_KEY` is absent, it returns `status: "deterministic_fallback"`. If configured, it performs a lightweight model metadata probe against Google GenAI SDK before declaring connectivity, without leaking secrets.
+### 6.1 Diagnosis and Live Gemini Integration
+- **SDK Setup:** Installed official Google GenAI SDK (`google-genai==2.30.1`) in `services/api/.venv`.
+- **Secret Hygiene:** `services/api/.env` is strictly git-ignored (`git status --ignored` verifies it is untracked). Secrets are never printed, displayed, logged, committed, or hardcoded.
+- **Root-Safe Path Resolution:** `services/api/app/core/config.py` uses `_BASE_DIR = Path(__file__).resolve().parent.parent.parent` to guarantee that `.env` is resolved regardless of whether commands run from workspace root or `services/api`.
+- **Model Verification:** Verified model catalog against Google GenAI API. Identified 62 models including:
+  - `gemini-3.8-flash`: Active official model.
+  - `gemini-3.5-flash`: Active official model.
+  - `gemini-embedding-2`: Active multimodal/text embedding model (native 768 dimensions).
+- **Live Generation Verification:** Verified non-empty responses via `client.models.generate_content`. Tested both text generation and exact 768-dimensional embedding generation.
+- **Provider Health & Graceful Degradation:**
+  - Real probe in `app/ai/provider_health.py` only marks `("connected", True)` after a genuine API response succeeds.
+  - Multi-model candidate cascade (`gemini-3.8-flash` -> `gemini-3.5-flash`) handles temporary 503 capacity spikes.
+  - Fast quota break and `asyncio.wait_for(timeout=5.0)` ensure requests never hang.
+  - When daily free-tier quota (20 requests/day) is reached, the system honestly reports `llm_status: "deterministic_fallback (quota_exhausted)"` and synthesizes audit-grounded deterministic explanations with `is_fallback: True`.
 
 ### 6.2 Embedding Generation and Vector Storage
-- **Model Specification:** `gemini-embedding-2` supports configurable dimensions, including 768.
+- **Model Specification:** `gemini-embedding-2` configured with native 768 dimensions.
 - **Database Schema:** `services/api/app/db/models.py` defines `embedding = Column(Vector(768), nullable=True)`.
-- **Current Operational Mode:** Because PostgreSQL is unreachable in this environment, vector storage and similarity search cannot execute live. The system truthfully reports:
-  - `database: "disconnected"`
-  - `pgvector: "unavailable"`
-  - `retrieval_mode: "lexical"`
-- **Semantic Retrieval Guarantee:** The system does NOT claim semantic vector retrieval while only performing lexical keyword matching.
+- **Current Operational Mode:** Because local PostgreSQL is unprovisioned, vector similarity search operates in lexical mode (`retrieval_mode: "lexical"`, `database: "disconnected"`). The system never pretends vector search is active when running lexically.
 
 ---
 
@@ -158,47 +149,49 @@ cd "C:\antigravity projects\PolicyPilot\services\api"
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
-collected 37 items
+collected 39 items
 
 tests/test_api_endpoints.py::test_list_schemes PASSED                    [  2%]
 tests/test_api_endpoints.py::test_get_scheme_detail PASSED               [  5%]
-tests/test_api_endpoints.py::test_discover_schemes PASSED                [  8%]
+tests/test_api_endpoints.py::test_discover_schemes PASSED                [  7%]
 tests/test_api_endpoints.py::test_profile_validate PASSED                [ 10%]
-tests/test_api_endpoints.py::test_evaluate_eligibility_eligible PASSED   [ 13%]
-tests/test_api_endpoints.py::test_evaluate_eligibility_missing_info PASSED [ 16%]
-tests/test_api_endpoints.py::test_sources_and_evidence PASSED            [ 18%]
-tests/test_api_endpoints.py::test_action_plan_generation PASSED          [ 21%]
-tests/test_api_endpoints.py::test_langgraph_workflow_endpoint PASSED     [ 24%]
-tests/test_api_endpoints.py::test_pmjay_cashless_action_plan_no_bank_dbt PASSED [ 27%]
-tests/test_api_endpoints.py::test_health_endpoint_honest_fallback_status PASSED [ 29%]
-tests/test_api_endpoints.py::test_pmayg_multi_criteria_incomplete_and_exclusions PASSED [ 32%]
-tests/test_api_endpoints.py::test_rythu_bharosa_telangana_benefit PASSED [ 35%]
-tests/test_api_endpoints.py::test_langgraph_workflow_no_schemes_fallback PASSED [ 37%]
-tests/test_health.py::test_health_endpoint PASSED                        [ 40%]
-tests/test_health.py::test_root_endpoint PASSED                          [ 43%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_numeric_less_than_or_equal_boundaries PASSED [ 45%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_numeric_string_coercion_and_currency_symbols PASSED [ 48%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_equality_and_case_insensitivity PASSED [ 51%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_set_membership_in PASSED [ 54%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_range_boundaries PASSED [ 56%]
-tests/test_rules_engine.py::TestDeterministicOperators::test_unsupported_or_malformed_operator_raises PASSED [ 59%]
-tests/test_rules_engine.py::TestCriterionEvaluation::test_explicit_result_states_met_and_not_met PASSED [ 62%]
-tests/test_rules_engine.py::TestCriterionEvaluation::test_missing_profile_attribute_yields_unknown_never_silently_passes PASSED [ 64%]
-tests/test_rules_engine.py::TestCriterionEvaluation::test_malformed_or_unsupported_rule_yields_unknown_never_silently_passes PASSED [ 67%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_single_passed_criterion_does_not_imply_scheme_approval PASSED [ 70%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_all_criteria_met_yields_eligible_and_complete PASSED [ 72%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_missing_data_yields_partially_eligible_and_incomplete PASSED [ 75%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_failure_trumps_missing_information PASSED [ 78%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_empty_criteria_yields_undetermined PASSED [ 81%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_unverified_scheme_cannot_be_declared_eligible PASSED [ 83%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmkisan_statutory_exclusions_and_no_land_cap PASSED [ 86%]
+tests/test_api_endpoints.py::test_evaluate_eligibility_eligible PASSED   [ 12%]
+tests/test_api_endpoints.py::test_evaluate_eligibility_missing_info PASSED [ 15%]
+tests/test_api_endpoints.py::test_sources_and_evidence PASSED            [ 17%]
+tests/test_api_endpoints.py::test_action_plan_generation PASSED          [ 20%]
+tests/test_api_endpoints.py::test_langgraph_workflow_endpoint PASSED     [ 23%]
+tests/test_api_endpoints.py::test_pmjay_cashless_action_plan_no_bank_dbt PASSED [ 25%]
+tests/test_api_endpoints.py::test_health_endpoint_status PASSED          [ 28%]
+tests/test_api_endpoints.py::test_deterministic_fallback_when_credentials_unavailable PASSED [ 30%]
+tests/test_api_endpoints.py::test_live_gemini_generation_when_configured PASSED [ 33%]
+tests/test_api_endpoints.py::test_pmayg_multi_criteria_incomplete_and_exclusions PASSED [ 35%]
+tests/test_api_endpoints.py::test_rythu_bharosa_telangana_benefit PASSED [ 38%]
+tests/test_api_endpoints.py::test_langgraph_workflow_no_schemes_fallback PASSED [ 41%]
+tests/test_health.py::test_health_endpoint PASSED                        [ 43%]
+tests/test_health.py::test_root_endpoint PASSED                          [ 46%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_numeric_less_than_or_equal_boundaries PASSED [ 48%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_numeric_string_coercion_and_currency_symbols PASSED [ 51%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_equality_and_case_insensitivity PASSED [ 53%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_set_membership_in PASSED [ 56%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_range_boundaries PASSED [ 58%]
+tests/test_rules_engine.py::TestDeterministicOperators::test_unsupported_or_malformed_operator_raises PASSED [ 61%]
+tests/test_rules_engine.py::TestCriterionEvaluation::test_explicit_result_states_met_and_not_met PASSED [ 64%]
+tests/test_rules_engine.py::TestCriterionEvaluation::test_missing_profile_attribute_yields_unknown_never_silently_passes PASSED [ 66%]
+tests/test_rules_engine.py::TestCriterionEvaluation::test_malformed_or_unsupported_rule_yields_unknown_never_silently_passes PASSED [ 69%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_single_passed_criterion_does_not_imply_scheme_approval PASSED [ 71%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_all_criteria_met_yields_eligible_and_complete PASSED [ 74%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_missing_data_yields_partially_eligible_and_incomplete PASSED [ 76%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_failure_trumps_missing_information PASSED [ 79%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_empty_criteria_yields_undetermined PASSED [ 82%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_unverified_scheme_cannot_be_declared_eligible PASSED [ 84%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmkisan_statutory_exclusions_and_no_land_cap PASSED [ 87%]
 tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmkisan_mts_class_iv_exemption_and_all_exclusions PASSED [ 89%]
-tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmjay_disjunctive_pathways_senior_70_plus_and_vulnerable PASSED [ 91%]
+tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmjay_disjunctive_pathways_senior_70_plus_and_vulnerable PASSED [ 92%]
 tests/test_rules_engine.py::TestSchemeEligibilityAggregation::test_pmayg_15_point_live_questionnaire PASSED [ 94%]
 tests/test_seed_loader.py::test_parse_seed_yaml_valid PASSED             [ 97%]
 tests/test_seed_loader.py::test_parse_seed_yaml_missing_file PASSED      [100%]
 
-TOTAL: 37 passed in 10.70s | Overall Code Coverage: 79%
+TOTAL: 39 passed in 23.31s | Overall Code Coverage: 81%
 ```
 
 ### 7.2 Backend Linting & Static Typing

@@ -1,7 +1,16 @@
+from pathlib import Path
 from typing import List
 
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BASE_DIR = Path(__file__).resolve().parent.parent.parent  # services/api
+_ROOT_DIR = _BASE_DIR.parent  # repository root
+
+# Ensure .env is loaded into process environment regardless of CWD
+load_dotenv(_BASE_DIR / ".env")
+load_dotenv(_ROOT_DIR / ".env")
 
 
 class Settings(BaseSettings):
@@ -47,7 +56,7 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(_BASE_DIR / ".env", _ROOT_DIR / ".env", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

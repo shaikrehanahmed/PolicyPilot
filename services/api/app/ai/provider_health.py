@@ -1,8 +1,7 @@
+import asyncio
 import logging
 import time
 from typing import Tuple
-
-import httpx
 
 from app.core.config import settings
 
@@ -33,18 +32,46 @@ async def check_gemini_provider_health(force_refresh: bool = False) -> Tuple[str
         _last_probe_time = now
         return _cached_status
 
-    # Real provider probe against current official model
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.llm_model}?key={api_key}"
+    # Real provider probe using official google-genai SDK
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                _cached_status = ("connected", True)
-            else:
-                logger.warning(f"Gemini probe returned status {resp.status_code}")
-                _cached_status = (f"deterministic_fallback (http_{resp.status_code})", False)
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+        probe_models = [settings.llm_model]
+        if "gemini-3.5-flash" not in probe_models:
+            probe_models.append("gemini-3.5-flash")
+
+        probe_succeeded = False
+        quota_hit = False
+        for pm in probe_models:
+            try:
+                resp = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=pm,
+                        contents="Reply ping",
+                        config=types.GenerateContentConfig(max_output_tokens=5),
+                    ),
+                    timeout=4.0,
+                )
+                if resp and resp.text and resp.text.strip():
+                    probe_succeeded = True
+                    break
+            except Exception as pe:
+                err_str = str(pe)
+                logger.debug(f"Probe on {pm} failed: {type(pe).__name__}")
+                if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                    quota_hit = True
+                    break
+
+        if probe_succeeded:
+            _cached_status = ("connected", True)
+        elif quota_hit:
+            _cached_status = ("deterministic_fallback (quota_exhausted)", False)
+        else:
+            _cached_status = ("deterministic_fallback (probe_unsuccessful)", False)
     except Exception as e:
-        logger.warning(f"Gemini live probe error: {e}")
+        logger.warning(f"Gemini live probe error: {type(e).__name__}")
         _cached_status = ("deterministic_fallback (network_error)", False)
 
     _last_probe_time = now

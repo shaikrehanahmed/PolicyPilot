@@ -2,7 +2,7 @@ import json
 import sys
 import urllib.request
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)
 
 def post(url, data):
     req = urllib.request.Request(
@@ -10,20 +10,20 @@ def post(url, data):
         data=json.dumps(data).encode('utf-8'),
         headers={'Content-Type': 'application/json', 'User-Agent': 'PolicyPilot-Verifier'}
     )
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=25) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
 def get(url):
     req = urllib.request.Request(url, headers={'User-Agent': 'PolicyPilot-Verifier'})
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=25) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
 print("=== STEP 1: HEALTH & SYSTEM STATUS CHECK ===")
 h = get("http://127.0.0.1:8000/api/health")
 print(f"Health: {h['status']} | Demo: {h['demo_mode']} | Database: {h['database']} | LLM: {h['llm_status']} | Retrieval: {h['retrieval_mode']}")
 assert h["demo_mode"] is True
-assert h["llm_status"] == "deterministic_fallback"
-assert h["retrieval_mode"] == "lexical"
+assert "connected" in h["llm_status"] or "deterministic_fallback" in h["llm_status"]
+assert h["retrieval_mode"] in ("lexical", "hybrid_vector")
 
 print("\n=== STEP 2: PROFILE NORMALIZATION & VALIDATION ===")
 pv = post("http://127.0.0.1:8000/api/v1/profile/validate", {
@@ -184,6 +184,9 @@ assert any("Cashless" in t for t in titles)
 bank_doc = next((d for d in pmjay_plan["required_documents"] if "Bank" in d["name"]), None)
 print(f"Bank Account requirement: {bank_doc.get('requirement_type') if bank_doc else 'None'}")
 assert bank_doc["requirement_type"] == "NOT_APPLICABLE"
+pmjay_expl = pmjay_plan.get("explanation", {})
+print(f"PM-JAY Explanation Provider: {pmjay_expl.get('provider')} | Model: {pmjay_expl.get('model')} | Fallback: {pmjay_expl.get('is_fallback')}")
+assert "provider" in pmjay_expl
 
 print("\n=== STEP 11: LANGGRAPH AGENTIC WORKFLOW EXECUTION ===")
 wf = post("http://127.0.0.1:8000/api/v1/workflow/run", {
@@ -208,6 +211,10 @@ for s in wf["steps_log"]:
     print(f"  ✓ {s['step_name']}: {s['detail']}")
 assert wf["status"] == "SUCCESS"
 assert len(wf["steps_log"]) == 6
+wf_plan = wf.get("action_plan")
+if wf_plan and "explanation" in wf_plan:
+    wf_expl = wf_plan["explanation"]
+    print(f"Workflow Action Plan Explanation: Provider={wf_expl.get('provider')} | Model={wf_expl.get('model')} | Fallback={wf_expl.get('is_fallback')}")
 
 print("\n=== STEP 12: OFFICIAL SOURCES & EVIDENCE REGISTRY ===")
 sources = get("http://127.0.0.1:8000/api/v1/sources")

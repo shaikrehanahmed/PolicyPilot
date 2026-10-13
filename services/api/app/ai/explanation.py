@@ -1,7 +1,6 @@
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
-
-import httpx
 
 from app.core.config import settings
 
@@ -94,7 +93,7 @@ async def generate_explanation(
             sources=sources,
         )
 
-    # Attempt live call to Gemini 3.8 Flash (gemini-3.8-flash)
+    # Attempt live call using official google-genai SDK
     prompt = f"""You are PolicyPilot's evidence explanation assistant.
 Explain the following eligibility evaluation to a citizen in plain, respectful, concise English (2-3 short paragraphs max).
 
@@ -114,39 +113,48 @@ OFFICIAL SOURCES: {[s.get('title') for s in sources]}
 OFFICIAL EVIDENCE EXCERPTS: {evidence_quotes or []}
 """
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.llm_model}:generateContent?key={api_key}"
-    payload = {
-        "contents": [
-            {
-                "parts": [{"text": prompt}]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 400,
-        },
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(url, json=payload)
-            if resp.status_code == 200:
-                data = resp.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts and "text" in parts[0]:
-                        explanation_text = parts[0]["text"].strip()
-                        return {
-                            "text": explanation_text,
-                            "provider": "gemini",
-                            "model": settings.llm_model,
-                            "is_fallback": False,
-                            "note": f"Live explanation synthesized by {settings.llm_model}",
-                        }
-            logger.warning(f"Gemini API returned status {resp.status_code}: {resp.text[:200]}")
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+        # Cascade through candidate flash models if primary encounters temporary capacity spikes (e.g. 503)
+        candidate_models = [settings.llm_model]
+        for fallback_m in ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest"]:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
+
+        for m_name in candidate_models:
+            try:
+                resp = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=m_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            temperature=0.2,
+                            max_output_tokens=400,
+                        ),
+                    ),
+                    timeout=5.0,
+                )
+                if resp and resp.text and resp.text.strip():
+                    explanation_text = resp.text.strip()
+                    return {
+                        "text": explanation_text,
+                        "provider": "gemini",
+                        "model": m_name,
+                        "is_fallback": False,
+                        "note": f"Live explanation synthesized by {m_name}",
+                    }
+            except Exception as model_err:
+                logger.warning(
+                    f"Gemini call to {m_name} failed: {type(model_err).__name__}. Trying next candidate model."
+                )
+                if "RESOURCE_EXHAUSTED" in str(model_err) or "429" in str(model_err):
+                    # Free tier quota exhausted — stop further candidate attempts and revert to fallback immediately
+                    break
     except Exception as e:
-        logger.warning(f"Failed to query Gemini API: {e}. Reverting to deterministic fallback.")
+        logger.warning(f"Failed to query Gemini API via SDK: {type(e).__name__}. Reverting to deterministic fallback.")
 
     # On any error, return deterministic fallback
     fallback = generate_deterministic_explanation(
