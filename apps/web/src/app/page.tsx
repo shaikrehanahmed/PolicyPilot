@@ -6,6 +6,7 @@ import {
   ArrowRight,
   FileCheck,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   UserCheck,
@@ -93,6 +94,13 @@ export default function HomePage() {
               >
                 Explore Schemes
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/rescue"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-medium text-sm transition-all shadow-xs"
+              >
+                <ShieldAlert className="w-4 h-4 text-amber-700" />
+                Application Stalled? Rescue Mode
               </Link>
               <Link
                 href="/profile"

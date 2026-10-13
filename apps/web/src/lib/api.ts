@@ -3,6 +3,9 @@ import {
   CitizenProfile,
   EligibilityResult,
   EvidenceChunk,
+  RescueDiagnoseRequest,
+  RescueDiagnoseResponse,
+  RescuePreset,
   Scheme,
   Source,
   SystemHealth,
@@ -194,5 +197,18 @@ export async function runWorkflow(
       goal,
       selected_scheme_slug: selectedSchemeSlug,
     }),
+  });
+}
+
+export async function fetchRescuePresets(): Promise<RescuePreset[]> {
+  return request<RescuePreset[]>("/api/v1/rescue/presets");
+}
+
+export async function diagnoseRescueStatus(
+  payload: RescueDiagnoseRequest
+): Promise<RescueDiagnoseResponse> {
+  return request<RescueDiagnoseResponse>("/api/v1/rescue/diagnose", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

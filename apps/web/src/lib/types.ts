@@ -214,3 +214,86 @@ export function formatCurrencyINR(amount?: number | null): string {
   if (amount === undefined || amount === null) return "Not set";
   return new Intl.NumberFormat("en-IN").format(amount);
 }
+
+export type TriageVerdictType =
+  | "NEEDS_CLARIFICATION"
+  | "CORRECTABLE_DEFECT"
+  | "PROCEDURAL_TRAP_WARNING"
+  | "QUEUE_WAIT_NO_ACTION"
+  | "SUBSTANTIVE_EXCLUSION"
+  | "UNRECOGNIZED_STATUS";
+
+export interface RescueClarificationQuestion {
+  fact_key: string;
+  question_text: string;
+  options: { value: string; label: string }[];
+  why_this_matters: string;
+}
+
+export interface RescueRemediationStep {
+  step_number: number;
+  destination: string;
+  action_title: string;
+  detailed_instruction: string;
+  required_items_to_carry: string[];
+}
+
+export interface RescueCitation {
+  quote: string;
+  source_id: string;
+  source_title: string;
+  source_url: string;
+  source_tier: number;
+  section_ref?: string;
+  last_verified_at: string;
+  freshness_status: "VERIFIED" | "STALE" | "REQUIRES_REVIEW" | "CONFLICTING";
+  xml_delimited_chunk: string;
+}
+
+export interface RescueAlternativeScheme {
+  scheme_id: string;
+  scheme_slug: string;
+  scheme_name: string;
+  overall_status: "ELIGIBLE" | "PARTIALLY_ELIGIBLE" | "NOT_ELIGIBLE" | "UNDETERMINED";
+  why_this_result: string;
+  missing_profile_fields: string[];
+}
+
+export interface RescuePreset {
+  preset_id: string;
+  label: string;
+  scheme_slug: string;
+  symptom_code: string;
+  sample_status_text: string;
+  suggested_profile: CitizenProfile;
+}
+
+export interface RescueDiagnoseRequest {
+  scheme_slug?: string;
+  raw_status_text: string;
+  selected_symptom_code?: string | null;
+  supplied_facts?: Record<string, string>;
+  profile?: CitizenProfile;
+}
+
+export interface RescueDiagnoseResponse {
+  status: string;
+  scrubbed_input_echo: string;
+  matched_scheme_slug?: string | null;
+  matched_scheme_name?: string | null;
+  matched_symptom_code?: string | null;
+  verdict: TriageVerdictType;
+  critical_trap_warning?: string | null;
+  clarification_questions: RescueClarificationQuestion[];
+  epistemic_state: {
+    known_facts: string[];
+    unknown_to_verify: string[];
+    unverified_boundaries: string[];
+  };
+  remediation_steps: RescueRemediationStep[];
+  citations: RescueCitation[];
+  alternative_schemes: RescueAlternativeScheme[];
+  draft_grievance_text?: string | null;
+  steps_log: WorkflowStepLog[];
+  disclaimer: string;
+}

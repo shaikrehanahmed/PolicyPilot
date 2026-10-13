@@ -10,6 +10,7 @@ from .api import (
     eligibility_router,
     health_router,
     profile_router,
+    rescue_router,
     schemes_router,
     sources_router,
     workflow_router,
@@ -80,6 +81,7 @@ app.include_router(eligibility_router, prefix="/api/v1")
 app.include_router(sources_router, prefix="/api/v1")
 app.include_router(action_plan_router, prefix="/api/v1")
 app.include_router(workflow_router, prefix="/api/v1")
+app.include_router(rescue_router, prefix="/api/v1")
 
 
 @app.get("/")

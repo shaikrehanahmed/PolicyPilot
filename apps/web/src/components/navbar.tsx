@@ -68,6 +68,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/schemes", label: "Schemes Discovery", icon: Compass },
+    { href: "/rescue", label: "Rescue Mode", icon: ShieldCheck },
     { href: "/profile", label: "Citizen Profile", icon: User },
     { href: "/sources", label: "Official Sources", icon: FileText },
   ];
