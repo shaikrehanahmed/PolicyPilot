@@ -11,13 +11,16 @@ import {
   Sparkles,
   UserCheck,
   BookOpen,
+  Bell,
 } from "lucide-react";
 import { fetchSchemes } from "@/lib/api";
 import { Scheme, formatCurrencyINR } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
+import { useLanguage } from "@/lib/i18n-context";
 
 export default function HomePage() {
   const { profile, loadDemoProfile } = useProfile();
+  const { t, localizeScheme, isRtl } = useLanguage();
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,84 +70,84 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="space-y-16 py-8">
+    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-16 py-8">
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 text-center md:text-left">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold tracking-wide uppercase">
               <Sparkles className="w-3.5 h-3.5" />
-              Evidence-Grounded Policy Navigation
+              {t("home.badge")}
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#17213F] tracking-tight leading-[1.15]">
-              Find the right schemes. <br />
-              <span className="text-[#4F46E5]">Understand your next steps.</span>
+              {t("home.heroTitle1")} <br />
+              <span className="text-[#4F46E5]">{t("home.heroTitle2")}</span>
             </h1>
 
             <p className="text-base sm:text-lg text-[#667085] max-w-2xl leading-relaxed">
-              Discover potentially relevant government schemes, understand their eligibility criteria,
-              review official Gazette evidence, and prepare a personalized application action plan.
+              {t("home.heroDesc")}
             </p>
 
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3.5 pt-2">
               <Link
                 href="/schemes"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium text-sm shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-sm shadow-xs transition-all"
               >
-                Explore Schemes
+                {t("home.exploreSchemes")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/rescue"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-medium text-sm transition-all shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold text-sm transition-all shadow-2xs"
               >
                 <ShieldAlert className="w-4 h-4 text-amber-700" />
-                Application Stalled? Rescue Mode
+                {t("home.rescueMode")}
               </Link>
               <Link
-                href="/profile"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-white hover:bg-gray-50 text-[#17213F] border border-gray-300 font-medium text-sm transition-all shadow-xs"
+                href="/updates"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 font-semibold text-sm transition-all shadow-2xs"
               >
-                Set Up Citizen Profile
+                <Bell className="w-4 h-4 text-[#4F46E5]" />
+                {t("home.schemeUpdates")}
               </Link>
             </div>
 
             {/* Quick Demo Walkthrough Switcher */}
             <div className="pt-4 border-t border-gray-200">
               <span className="text-xs text-gray-500 font-medium block mb-2">
-                Evaluator Quick Presets (Click to switch citizen profile):
+                {t("home.presetsLabel")}
               </span>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => loadDemoProfile("farmer")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
                     profile.occupation === "farmer"
                       ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  🌾 Telangana Farmer (TS, 3.0 Acres)
+                  🌾 Telangana Farmer (TS)
                 </button>
                 <button
                   onClick={() => loadDemoProfile("student")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
                     profile.occupation === "student"
                       ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  🎓 SC Student (Undergrad, Scholarship)
+                  🎓 SC Student (Undergrad)
                 </button>
                 <button
                   onClick={() => loadDemoProfile("vulnerable_family")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
                     profile.occupation === "daily-wage worker" || profile.occupation === "laborer"
                       ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  🏠 Low-Income Family (EWS, Health & Housing)
+                  🏠 Low-Income Family (EWS)
                 </button>
               </div>
             </div>
@@ -157,7 +160,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-semibold text-gray-800">
-                    Active Citizen Session
+                    {t("home.activeSession")}
                   </span>
                 </div>
                 <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
@@ -167,25 +170,25 @@ export default function HomePage() {
 
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">Occupation</span>
+                  <span className="text-gray-500">{t("home.occupation")}</span>
                   <span className="font-semibold text-gray-900 capitalize">
                     {profile.occupation || "Not set"}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">Annual Income</span>
+                  <span className="text-gray-500">{t("home.annualIncome")}</span>
                   <span className="font-semibold text-gray-900">
                     {profile.annual_income_inr ? `₹${formatCurrencyINR(profile.annual_income_inr)}` : "Not set"}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">Landholding</span>
+                  <span className="text-gray-500">{t("home.landholding")}</span>
                   <span className="font-semibold text-gray-900">
                     {profile.landholding_acres != null ? `${profile.landholding_acres} Acres` : "Not provided"}
                   </span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-gray-500">Assistance Goal</span>
+                  <span className="text-gray-500">{t("home.assistanceGoal")}</span>
                   <span className="font-semibold text-indigo-600 max-w-[200px] truncate text-right">
                     {profile.goal || "General Eligibility"}
                   </span>
@@ -196,7 +199,7 @@ export default function HomePage() {
                 href="/schemes"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] font-semibold text-xs transition-colors"
               >
-                Match Schemes for this Profile →
+                {t("home.matchSchemesBtn")}
               </Link>
             </div>
           </div>
@@ -254,18 +257,15 @@ export default function HomePage() {
               </div>
               <div>
                 <h3 className="font-bold text-base text-[#17213F]">
-                  Deterministic Rule Engine
+                  {t("home.rulesTitle")}
                 </h3>
                 <span className="text-xs text-emerald-700 font-medium">
-                  100% Python Code • Zero LLM Hallucination
+                  {t("home.rulesSubtitle")}
                 </span>
               </div>
             </div>
             <p className="text-xs text-[#667085] leading-relaxed mb-4">
-              Scheme eligibility conditions are executed strictly as deterministic boolean and numeric operators.
-              Evaluations yield explicit states: <code className="text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded">met</code>,{" "}
-              <code className="text-rose-800 bg-rose-50 px-1 py-0.5 rounded">not_met</code>, or{" "}
-              <code className="text-amber-800 bg-amber-50 px-1 py-0.5 rounded">unknown</code>. Missing profile attributes never silently pass.
+              {t("home.rulesDesc")}
             </p>
             <div className="text-[11px] bg-[#F8FAFC] rounded-md p-3 text-gray-600 font-mono space-y-1">
               <div>✓ income &lt;= ceiling → MET / NOT_MET</div>
@@ -283,16 +283,15 @@ export default function HomePage() {
               </div>
               <div>
                 <h3 className="font-bold text-base text-[#17213F]">
-                  Grounded AI Explanations
+                  {t("home.aiTitle")}
                 </h3>
                 <span className="text-xs text-indigo-700 font-medium">
-                  Gemini 3.8 Flash • Strict Source Guardrails
+                  {t("home.aiSubtitle")}
                 </span>
               </div>
             </div>
             <p className="text-xs text-[#667085] leading-relaxed mb-4">
-              AI is never allowed to invent eligibility decisions. It translates verified evaluation results into
-              respectful, clear plain English, citing exact Gazette clauses and preparing personalized document preparation checklists.
+              {t("home.aiDesc")}
             </p>
             <div className="text-[11px] bg-[#F8FAFC] rounded-md p-3 text-gray-600 font-mono space-y-1">
               <div>✓ Explains missing data in plain English</div>
@@ -307,16 +306,16 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-[#17213F]">Verified Government Schemes</h2>
+            <h2 className="text-2xl font-bold text-[#17213F]">{t("home.verifiedSchemesTitle")}</h2>
             <p className="text-xs text-[#667085]">
-              Traceable to official Gazettes and departmental implementation guidelines.
+              {t("home.verifiedSchemesDesc")}
             </p>
           </div>
           <Link
             href="/schemes"
             className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1"
           >
-            View All Schemes ({schemes.length}) →
+            {t("home.viewAllSchemes")} ({schemes.length}) →
           </Link>
         </div>
 
@@ -328,29 +327,31 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {schemes.slice(0, 3).map((scheme) => (
-              <div
-                key={scheme.id}
-                className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
-                      {scheme.category}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {scheme.verification_status}
-                    </span>
+            {schemes.slice(0, 3).map((scheme) => {
+              const { displayName, displayDescription } = localizeScheme(scheme);
+              return (
+                <div
+                  key={scheme.id}
+                  className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                        {scheme.category}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {scheme.verification_status}
+                      </span>
+                    </div>
+
+                    <h3 className="font-bold text-base text-[#17213F] leading-snug">
+                      {displayName}
+                    </h3>
+
+                    <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
+                      {displayDescription}
+                    </p>
                   </div>
-
-                  <h3 className="font-bold text-base text-[#17213F] leading-snug">
-                    {scheme.name}
-                  </h3>
-
-                  <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
-                    {scheme.description}
-                  </p>
-                </div>
 
                 <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
                   <span className="text-[11px] text-gray-500 font-medium">
@@ -360,11 +361,12 @@ export default function HomePage() {
                     href={`/schemes/${scheme.slug}`}
                     className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1"
                   >
-                    Assess Eligibility →
+                    {t("home.assessEligibility")}
                   </Link>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </section>

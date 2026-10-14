@@ -15,21 +15,32 @@ import {
   X,
   Server,
   Layers,
+  Globe,
+  Mic,
+  Bell,
+  Check,
 } from "lucide-react";
 import { fetchHealth } from "@/lib/api";
 import { SystemHealth } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
+import { useI18n } from "@/lib/i18n-context";
+import { VoiceAccessibilityBar } from "./voice-accessibility-bar";
 
 export function Navbar() {
   const pathname = usePathname();
   const { loadDemoProfile, profile } = useProfile();
+  const { language, setLanguage, t, supportedLanguages } = useI18n();
+
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [showDemoMenu, setShowDemoMenu] = useState(false);
   const [showStatusPanel, setShowStatusPanel] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
 
   const statusRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchHealth()
@@ -61,27 +72,33 @@ export function Navbar() {
       if (demoRef.current && !demoRef.current.contains(event.target as Node)) {
         setShowDemoMenu(false);
       }
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setShowLangMenu(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const navLinks = [
-    { href: "/schemes", label: "Schemes Discovery", icon: Compass },
-    { href: "/rescue", label: "Rescue Mode", icon: ShieldCheck },
-    { href: "/profile", label: "Citizen Profile", icon: User },
-    { href: "/sources", label: "Official Sources", icon: FileText },
+    { href: "/schemes", label: t("nav.schemes"), icon: Compass },
+    { href: "/rescue", label: t("nav.rescue"), icon: ShieldCheck },
+    { href: "/updates", label: t("nav.updates"), icon: Bell },
+    { href: "/profile", label: t("nav.profile"), icon: User },
+    { href: "/sources", label: t("nav.sources"), icon: FileText },
   ];
+
+  const currentLangObj = supportedLanguages.find((l) => l.code === language) || supportedLanguages[0];
 
   const isDbConnected = health?.database === "connected";
   const isLlmConnected = health?.llm_status === "connected";
   const isVectorRetrieval = health?.retrieval_mode === "hybrid_vector";
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB]">
+    <header dir={language === "ur" ? "rtl" : "ltr"} className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand & Primary Navigation */}
-        <div className="flex items-center gap-4 lg:gap-8">
+        <div className="flex items-center gap-4 lg:gap-7">
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-9 h-9 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white font-bold text-lg shadow-xs group-hover:bg-[#4338CA] transition-colors">
               P
@@ -91,7 +108,7 @@ export function Navbar() {
                 PolicyPilot
               </span>
               <span className="text-[10px] uppercase tracking-wider text-[#667085] block font-medium">
-                Evidence-Grounded Policy Nav
+                {t("nav.tagline")}
               </span>
             </div>
           </Link>
@@ -105,7 +122,7 @@ export function Navbar() {
               aria-expanded={showStatusPanel}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-semibold text-slate-700">Prototype · Demo data</span>
+              <span className="text-[11px] font-semibold text-slate-700">{t("nav.demoStatus")}</span>
               <ChevronDown
                 className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
                   showStatusPanel ? "rotate-180" : ""
@@ -119,7 +136,7 @@ export function Navbar() {
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
                   <div className="flex items-center gap-1.5">
                     <Server className="w-4 h-4 text-[#4F46E5]" />
-                    <span className="font-bold text-gray-900 text-xs">System Status</span>
+                    <span className="font-bold text-gray-900 text-xs">{t("nav.systemStatus")}</span>
                   </div>
                   <span className="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">
                     v{health?.version || "0.1.0"}
@@ -132,7 +149,7 @@ export function Navbar() {
                     <div>
                       <div className="flex items-center gap-1.5 font-medium text-gray-700">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Rules Engine</span>
+                        <span>{t("nav.rulesEngine")}</span>
                       </div>
                       <p className="text-[11px] text-gray-500 mt-0.5">
                         Deterministic Python evaluator (Zero LLM reliance)
@@ -148,7 +165,7 @@ export function Navbar() {
                     <div>
                       <div className="flex items-center gap-1.5 font-medium text-gray-700">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                        <span>AI Provider</span>
+                        <span>{t("nav.aiProvider")}</span>
                       </div>
                       <p className="text-[11px] text-gray-500 mt-0.5">
                         {isLlmConnected
@@ -172,7 +189,7 @@ export function Navbar() {
                     <div>
                       <div className="flex items-center gap-1.5 font-medium text-gray-700">
                         <Layers className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>Retrieval</span>
+                        <span>{t("nav.retrieval")}</span>
                       </div>
                       <p className="text-[11px] text-gray-500 mt-0.5">
                         {isVectorRetrieval
@@ -196,7 +213,7 @@ export function Navbar() {
                     <div>
                       <div className="flex items-center gap-1.5 font-medium text-gray-700">
                         <Database className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>Database</span>
+                        <span>{t("nav.database")}</span>
                       </div>
                       <p className="text-[11px] text-gray-500 mt-0.5">
                         {isDbConnected
@@ -224,7 +241,7 @@ export function Navbar() {
           </div>
 
           {/* Desktop Primary Nav Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -232,14 +249,14 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
                     isActive
                       ? "bg-[#4F46E5]/10 text-[#4F46E5]"
                       : "text-[#667085] hover:text-[#17213F] hover:bg-gray-100/70"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {link.label}
+                  <span>{link.label}</span>
                 </Link>
               );
             })}
@@ -247,14 +264,68 @@ export function Navbar() {
         </div>
 
         {/* Right Utility Cluster & Desktop Actions */}
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-2.5">
+          {/* Voice Accessibility Trigger Button */}
+          <button
+            onClick={() => setShowVoiceDrawer(!showVoiceDrawer)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 transition-all cursor-pointer shadow-2xs"
+            title="Open Voice Accessibility Assistant (English, తెలుగు, हिन्दी, اردو)"
+            aria-label="Voice Accessibility Assistant"
+          >
+            <Mic className="w-4 h-4 text-[#4F46E5]" />
+            <span className="hidden md:inline">{t("voice_btn_speak") || t("nav.voiceAssistant")}</span>
+          </button>
+
+          {/* Language Selector Dropdown */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setShowLangMenu(!showLangMenu)}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-[#17213F] rounded-lg transition-colors border border-gray-200 cursor-pointer"
+              aria-label="Language Selector"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#4F46E5]" />
+              <span>{currentLangObj.nativeName}</span>
+              <ChevronDown
+                className={`w-3 h-3 text-gray-500 transition-transform duration-200 ${
+                  showLangMenu ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {showLangMenu && (
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-gray-400 font-semibold uppercase tracking-wider text-[10px]">
+                  {t("nav.selectLanguage")}
+                </div>
+                {supportedLanguages.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLanguage(l.code);
+                      setShowLangMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 hover:bg-indigo-50 flex items-center justify-between cursor-pointer ${
+                      language === l.code ? "bg-indigo-50/70 font-bold text-[#4F46E5]" : "text-gray-800"
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{l.nativeName}</span>
+                      <span className="text-[10px] text-gray-400">{l.label}</span>
+                    </div>
+                    {language === l.code && <Check className="w-4 h-4 text-[#4F46E5]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Preset Profile Dropdown */}
           <div className="relative" ref={demoRef}>
             <button
               onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200/80 text-[#17213F] rounded-md transition-colors border border-gray-200 cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-gray-100 hover:bg-gray-200/80 text-[#17213F] rounded-lg transition-colors border border-gray-200 cursor-pointer"
             >
-              <span>Demo Profile:</span>
+              <span className="hidden lg:inline text-gray-500">{t("nav.demoProfile")}:</span>
               <span className="font-bold text-[#4F46E5] capitalize">
                 {profile.occupation || "Telangana Farmer"}
               </span>
@@ -306,14 +377,22 @@ export function Navbar() {
 
           <Link
             href="/profile"
-            className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-md text-white bg-[#4F46E5] hover:bg-[#4338CA] shadow-2xs transition-colors"
+            className="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-[#4F46E5] hover:bg-[#4338CA] shadow-2xs transition-colors"
           >
-            Check Eligibility
+            {t("nav.checkEligibility")}
           </Link>
         </div>
 
-        {/* Mobile Hamburger Button */}
-        <div className="flex md:hidden items-center gap-2">
+        {/* Mobile Action Cluster */}
+        <div className="flex lg:hidden items-center gap-1.5">
+          <button
+            onClick={() => setShowVoiceDrawer(!showVoiceDrawer)}
+            className="p-2 rounded-lg bg-indigo-50 text-[#4F46E5] border border-indigo-200"
+            aria-label="Open voice assistant"
+          >
+            <Mic className="w-4 h-4" />
+          </button>
+
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
@@ -326,8 +405,30 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg animate-in slide-in-from-top-2 duration-150">
-          <nav className="space-y-1">
+        <div className="lg:hidden border-t border-gray-200 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg animate-in slide-in-from-top-2 duration-150">
+          {/* Language Selector Chips in Mobile */}
+          <div className="space-y-1.5">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
+              {t("nav.selectLanguage")}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {supportedLanguages.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => setLanguage(l.code)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                    language === l.code
+                      ? "bg-[#4F46E5] text-white border-[#4F46E5]"
+                      : "bg-gray-50 text-gray-800 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  {l.nativeName}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <nav className="space-y-1 pt-2 border-t border-gray-100">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -388,9 +489,19 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-[#4F46E5] text-white font-semibold text-xs transition-colors"
             >
-              Check Eligibility
+              {t("nav.checkEligibility")}
             </Link>
           </div>
+        </div>
+      )}
+
+      {/* Expandable Global Voice & Chat Assistant Drawer */}
+      {showVoiceDrawer && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 border-t border-gray-100 bg-slate-50/90">
+          <VoiceAccessibilityBar
+            compact
+            onCloseDrawer={() => setShowVoiceDrawer(false)}
+          />
         </div>
       )}
     </header>

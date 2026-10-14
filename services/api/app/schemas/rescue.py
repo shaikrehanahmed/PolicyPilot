@@ -88,6 +88,13 @@ class RescuePresetOut(BaseModel):
     suggested_profile: Dict[str, Any] = Field(default_factory=dict)
 
 
+class SupportedLanguage(str, Enum):
+    EN = "en"
+    TE = "te"
+    HI = "hi"
+    UR = "ur"
+
+
 class RescueWorkflowStepLog(BaseModel):
     step_name: str
     detail: str
@@ -113,6 +120,7 @@ class RescueDiagnoseRequest(BaseModel):
         default_factory=dict,
         description="Optional citizen profile for No-Dead-End alternative scheme evaluation",
     )
+    lang: SupportedLanguage = Field(default=SupportedLanguage.EN)
 
 
 class RescueDiagnoseResponse(BaseModel):
@@ -123,6 +131,9 @@ class RescueDiagnoseResponse(BaseModel):
     matched_symptom_code: Optional[str] = None
     verdict: TriageVerdictType
     critical_trap_warning: Optional[str] = None
+    actor_explanation: Optional[str] = None
+    simple_explanation: Optional[str] = None
+    polite_office_draft: Optional[str] = None
     clarification_questions: List[ClarificationQuestion] = Field(default_factory=list)
     epistemic_state: EpistemicBreakdown
     remediation_steps: List[RemediationStep] = Field(default_factory=list)

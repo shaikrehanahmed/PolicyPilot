@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { fetchSources, fetchSourcesStatus } from "@/lib/api";
 import { Source } from "@/lib/types";
+import { BackButton } from "@/components/back-button";
+import { useLanguage } from "@/lib/i18n-context";
 
 interface SourcesStatusData {
   total_sources: number;
@@ -21,6 +23,7 @@ interface SourcesStatusData {
 }
 
 export default function SourcesPage() {
+  const { t, isRtl } = useLanguage();
   const [sources, setSources] = useState<Source[]>([]);
   const [status, setStatus] = useState<SourcesStatusData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,19 +45,22 @@ export default function SourcesPage() {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div dir={isRtl ? "rtl" : "ltr"} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <div>
+        <BackButton fallbackHref="/" />
+      </div>
+
       {/* Header */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold uppercase tracking-wider">
           <ShieldCheck className="w-3.5 h-3.5" />
-          Official Provenance & Verification
+          {t("sources.badge")}
         </div>
         <h1 className="text-3xl font-extrabold text-[#17213F] tracking-tight">
-          Government Sources Registry
+          {t("sources.title")}
         </h1>
         <p className="text-sm text-[#667085] max-w-3xl">
-          Auditable registry of all government Gazettes, notifications, and implementation frameworks
-          backing PolicyPilot&apos;s deterministic rules. Every rule is traceable to an official source.
+          {t("sources.subtitle")}
         </p>
       </div>
 
@@ -62,25 +68,25 @@ export default function SourcesPage() {
       {status && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs">
-            <span className="text-xs text-gray-500 font-medium block">Total Ingested Sources</span>
+            <span className="text-xs text-gray-500 font-medium block">{t("sources.total")}</span>
             <span className="text-2xl font-bold text-gray-900 mt-1 block">
               {status.total_sources}
             </span>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs">
-            <span className="text-xs text-gray-500 font-medium block">Verified Gazette Sources</span>
+            <span className="text-xs text-gray-500 font-medium block">{t("sources.verified")}</span>
             <span className="text-2xl font-bold text-emerald-600 mt-1 block">
               {status.verified_sources}
             </span>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs">
-            <span className="text-xs text-gray-500 font-medium block">Tier 1 Primary Sources</span>
+            <span className="text-xs text-gray-500 font-medium block">{t("sources.tier1")}</span>
             <span className="text-2xl font-bold text-indigo-600 mt-1 block">
               {status.tier_1_sources}
             </span>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs">
-            <span className="text-xs text-gray-500 font-medium block">Active Retrieval Mode</span>
+            <span className="text-xs text-gray-500 font-medium block">{t("sources.retrieval")}</span>
             <span className="text-xs font-mono font-bold text-amber-600 mt-2 block capitalize">
               {status.retrieval_mode.replace(/_/g, " ")}
             </span>

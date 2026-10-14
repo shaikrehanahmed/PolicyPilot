@@ -10,21 +10,18 @@ import {
   AlertTriangle,
   RotateCw,
   Info,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { discoverSchemes, fetchSchemes } from "@/lib/api";
 import { Scheme } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
-
-const CATEGORIES = [
-  { id: "all", label: "All Schemes" },
-  { id: "agriculture", label: "Agriculture" },
-  { id: "healthcare", label: "Healthcare" },
-  { id: "housing", label: "Housing" },
-  { id: "education", label: "Education" },
-];
+import { useLanguage } from "@/lib/i18n-context";
+import { BackButton } from "@/components/back-button";
 
 export default function SchemesPage() {
   const { profile } = useProfile();
+  const { t, speechLang, localizeScheme, isRtl } = useLanguage();
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +29,7 @@ export default function SchemesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isRankedForProfile, setIsRankedForProfile] = useState(false);
   const [rankingNotice, setRankingNotice] = useState<string | null>(null);
+  const [isListeningSearch, setIsListeningSearch] = useState(false);
 
   const loadAllSchemes = async () => {
     setLoading(true);
@@ -118,16 +116,57 @@ export default function SchemesPage() {
     };
   }, [activeCategory, searchQuery]);
 
+  const categories = [
+    { id: "all", label: t("schemes.catAll") },
+    { id: "agriculture", label: t("schemes.catAgri") },
+    { id: "healthcare", label: t("schemes.catHealth") },
+    { id: "housing", label: t("schemes.catHousing") },
+    { id: "education", label: t("schemes.catEdu") },
+  ];
+
+  const startVoiceSearch = () => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = speechLang;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListeningSearch(true);
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        setSearchQuery(text);
+        setIsListeningSearch(false);
+      };
+      recognition.onerror = () => setIsListeningSearch(false);
+      recognition.onend = () => setIsListeningSearch(false);
+      recognition.start();
+    } catch {
+      setIsListeningSearch(false);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div
+      dir={isRtl ? "rtl" : "ltr"}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8"
+    >
+      <div>
+        <BackButton fallbackHref="/" />
+      </div>
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-[#17213F] tracking-tight">
-            Scheme Discovery
+            {t("nav_schemes") || t("schemes.title")}
           </h1>
           <p className="text-sm text-[#667085] mt-1">
-            Browse and match central and state welfare initiatives with verified Gazette rules.
+            {t("schemes.desc")}
             {!loading && !error && (
               <span className="font-semibold text-indigo-700 ml-1.5">
                 ({schemes.length} active {schemes.length === 1 ? "scheme" : "schemes"} available)
@@ -144,7 +183,7 @@ export default function SchemesPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-indigo-600" />
-            Rank for My Profile ({profile.occupation || "Farmer"}, {profile.state || "TS"})
+            {t("schemes.rankForMe")} ({profile.occupation || "Farmer"}, {profile.state || "TS"})
           </button>
         </div>
       </div>
@@ -153,7 +192,7 @@ export default function SchemesPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Category Pills */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
@@ -168,17 +207,29 @@ export default function SchemesPage() {
           ))}
         </div>
 
-        {/* Keyword Search Input */}
-        <div className="relative w-full md:w-72">
+        {/* Keyword Search Input with Voice Dictation */}
+        <div className="relative w-full md:w-80 flex items-center">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && loadAllSchemes()}
-            placeholder="Search schemes or benefits..."
-            className="w-full text-xs pl-9 pr-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder={t("schemes.searchPlaceholder")}
+            className="w-full text-xs pl-9 pr-9 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
+          <button
+            type="button"
+            onClick={startVoiceSearch}
+            className={`absolute right-2.5 p-1 rounded-md transition-colors cursor-pointer ${
+              isListeningSearch
+                ? "bg-red-50 text-red-600 animate-pulse"
+                : "text-gray-400 hover:text-[#4F46E5]"
+            }`}
+            title="Search by voice"
+          >
+            {isListeningSearch ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -268,6 +319,7 @@ export default function SchemesPage() {
               "VERIFIED";
             const criteriaCount = scheme.criteria_count ?? (scheme.criteria?.length || 0);
             const documentsCount = scheme.documents_count ?? (scheme.documents?.length || 0);
+            const { displayName, displayDescription } = localizeScheme(scheme);
 
             return (
               <div
@@ -300,7 +352,7 @@ export default function SchemesPage() {
                   {/* Title & Ministry */}
                   <div>
                     <h2 className="font-bold text-base text-[#17213F] leading-snug">
-                      {scheme.name}
+                      {displayName}
                     </h2>
                     <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
                       <Building2 className="w-3 h-3 text-gray-400 shrink-0" />
@@ -310,7 +362,7 @@ export default function SchemesPage() {
 
                   {/* Description */}
                   <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
-                    {scheme.description}
+                    {displayDescription}
                   </p>
 
                   {/* Match Rationale if available */}

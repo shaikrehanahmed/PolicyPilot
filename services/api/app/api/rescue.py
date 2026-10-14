@@ -54,6 +54,33 @@ async def diagnose_application_status(payload: RescueDiagnoseRequest) -> RescueD
         for s in final_state.get("steps_log", [])
     ]
 
+    remediation_steps = final_state.get("remediation_steps", [])
+    actor_key = "STUDENT_APPLICANT"
+    if remediation_steps:
+        dest_val = getattr(remediation_steps[0].destination, "value", str(remediation_steps[0].destination))
+        if "BANK" in dest_val:
+            actor_key = "BANK_OR_NPCI_DESK"
+        elif "INSTITUTE" in dest_val:
+            actor_key = "INSTITUTE_NODAL_OFFICER"
+        elif "MEESEVA" in dest_val:
+            actor_key = "MEESEVA_OR_CSC_CENTRE"
+        elif "WAIT" in dest_val:
+            actor_key = "NO_ACTION_REQUIRED_WAIT"
+
+    from ..ai.i18n import get_actor_explanation, get_disclaimer
+
+    lang_code = payload.lang.value if hasattr(payload.lang, "value") else str(payload.lang)
+    actor_exp = get_actor_explanation(actor_key, lang=lang_code)
+    simple_exp = (
+        final_state.get("simple_explanation")
+        or (
+            "Application marked Defective: Details mismatch must be updated in NSP OTR module first."
+            if final_state.get("matched_symptom_code") == "NSP_DEFECT_BASIC_INFO_MISMATCH"
+            else (remediation_steps[0].action_title if remediation_steps else "Application status evaluated.")
+        )
+    )
+    polite_draft = final_state.get("draft_grievance_text")
+
     return RescueDiagnoseResponse(
         status="SUCCESS",
         scrubbed_input_echo=final_state.get("scrubbed_input_echo", ""),
@@ -62,11 +89,15 @@ async def diagnose_application_status(payload: RescueDiagnoseRequest) -> RescueD
         matched_symptom_code=final_state.get("matched_symptom_code"),
         verdict=final_state.get("verdict", TriageVerdictType.UNRECOGNIZED_STATUS),
         critical_trap_warning=final_state.get("critical_trap_warning"),
+        actor_explanation=actor_exp,
+        simple_explanation=simple_exp,
+        polite_office_draft=polite_draft,
         clarification_questions=final_state.get("clarification_questions", []),
         epistemic_state=final_state.get("epistemic_state", EpistemicBreakdown()),
-        remediation_steps=final_state.get("remediation_steps", []),
+        remediation_steps=remediation_steps,
         citations=final_state.get("citations", []),
         alternative_schemes=final_state.get("alternative_schemes", []),
-        draft_grievance_text=final_state.get("draft_grievance_text"),
+        draft_grievance_text=polite_draft,
         steps_log=steps,
+        disclaimer=get_disclaimer(lang=lang_code),
     )

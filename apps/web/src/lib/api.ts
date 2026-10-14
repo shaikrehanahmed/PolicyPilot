@@ -1,14 +1,21 @@
 import {
   ActionPlan,
+  AnnouncementItem,
+  AssistantChatRequest,
+  AssistantChatResponse,
   CitizenProfile,
   EligibilityResult,
   EvidenceChunk,
+  LanguageCode,
   RescueDiagnoseRequest,
   RescueDiagnoseResponse,
   RescuePreset,
   Scheme,
   Source,
+  SourceChangeCheckResult,
   SystemHealth,
+  TTSCapabilities,
+  TTSSynthesizeResponse,
   WorkflowRunResponse,
 } from "./types";
 
@@ -212,3 +219,50 @@ export async function diagnoseRescueStatus(
     body: JSON.stringify(payload),
   });
 }
+
+export async function fetchAnnouncements(
+  lang: string = "en",
+  verifiedOnly: boolean = false
+): Promise<AnnouncementItem[]> {
+  const q = new URLSearchParams({ lang });
+  if (verifiedOnly) q.set("verified_only", "true");
+  return request<AnnouncementItem[]>(`/api/v1/announcements?${q.toString()}`);
+}
+
+export async function checkOfficialSourceUpdates(
+  lang: string = "en"
+): Promise<SourceChangeCheckResult> {
+  const q = new URLSearchParams({ lang });
+  return request<SourceChangeCheckResult>(
+    `/api/v1/announcements/check-updates?${q.toString()}`,
+    {
+      method: "POST",
+    }
+  );
+}
+
+export const checkAnnouncementUpdates = checkOfficialSourceUpdates;
+
+export async function chatWithAssistant(
+  payload: AssistantChatRequest
+): Promise<AssistantChatResponse> {
+  return request<AssistantChatResponse>("/api/v1/assistant/chat", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchTTSCapabilities(): Promise<TTSCapabilities> {
+  return request<TTSCapabilities>("/api/v1/tts/capabilities");
+}
+
+export async function synthesizeSpeechAudio(
+  text: string,
+  lang: LanguageCode
+): Promise<TTSSynthesizeResponse> {
+  return request<TTSSynthesizeResponse>("/api/v1/tts/synthesize", {
+    method: "POST",
+    body: JSON.stringify({ text, lang }),
+  });
+}
+

@@ -1,21 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import { ShieldCheck, ExternalLink } from "lucide-react";
+import { useLanguage } from "@/lib/i18n-context";
 
 export function Footer() {
+  const { t, isRtl } = useLanguage();
+
   return (
-    <footer className="bg-white border-t border-[#E5E7EB] mt-16 text-sm text-[#667085]">
+    <footer dir={isRtl ? "rtl" : "ltr"} className="bg-white border-t border-[#E5E7EB] mt-16 text-sm text-[#667085]">
       {/* Top Disclaimer Section */}
       <div className="bg-[#F8FAFC] border-b border-[#E5E7EB] py-6 px-4">
         <div className="max-w-7xl mx-auto flex items-start gap-3">
           <ShieldCheck className="w-5 h-5 text-[#4F46E5] shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed text-[#475467]">
             <strong className="text-[#17213F] font-semibold">
-              Official Evidence & Non-Fabrication Commitment:
+              {t("footer.disclaimerTitle")}
             </strong>{" "}
-            PolicyPilot strictly anchors all eligibility criteria and benefit information to official government publications,
-            Gazette notifications, and verified department guidelines. The system never generates synthetic criteria, fabricated
-            deadlines, or imaginary benefit amounts. All eligibility determinations are calculated by a deterministic rule engine
-            independent of LLM output. Final benefit approvals rest solely with the competent government authority.
+            {t("footer.disclaimerText")}
           </div>
         </div>
       </div>
@@ -30,38 +32,31 @@ export function Footer() {
             <span className="font-bold text-base text-[#17213F]">PolicyPilot</span>
           </div>
           <p className="text-xs max-w-md leading-relaxed text-[#667085]">
-            Bridging the last-mile gap between complex welfare policies and citizens through deterministic rules, verified evidence retrieval, and personalized action roadmaps.
+            {t("footer.mission")}
           </p>
           <div className="pt-2 text-xs text-gray-500">
-            <span className="font-semibold text-gray-700">Team Axiom | HACK-X 2026</span>
-            <div className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-gray-600">
-              <span>Mariya Fatima (Team Lead)</span>
-              <span>•</span>
-              <span>Nameera Sadaf</span>
-              <span>•</span>
-              <span>Shaik Rehan Ahmed</span>
-            </div>
+            <span className="font-semibold text-gray-700">{t("footer.team")}</span>
           </div>
         </div>
 
         <div>
           <h4 className="font-semibold text-xs text-[#17213F] uppercase tracking-wider mb-3">
-            Core Modules
+            {t("footer.modules")}
           </h4>
           <ul className="space-y-2 text-xs">
             <li>
               <Link href="/schemes" className="hover:text-[#4F46E5] transition-colors">
-                Scheme Discovery
+                {t("nav.schemes")}
               </Link>
             </li>
             <li>
               <Link href="/profile" className="hover:text-[#4F46E5] transition-colors">
-                Citizen Demographic Profile
+                {t("nav.profile")}
               </Link>
             </li>
             <li>
               <Link href="/sources" className="hover:text-[#4F46E5] transition-colors">
-                Official Sources & Evidence
+                {t("nav.sources")}
               </Link>
             </li>
           </ul>
@@ -69,7 +64,7 @@ export function Footer() {
 
         <div>
           <h4 className="font-semibold text-xs text-[#17213F] uppercase tracking-wider mb-3">
-            Official Portals
+            {t("footer.portals")}
           </h4>
           <ul className="space-y-2 text-xs">
             <li>

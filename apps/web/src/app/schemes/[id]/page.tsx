@@ -10,7 +10,6 @@ import {
   FileText,
   ExternalLink,
   Sparkles,
-  ArrowLeft,
   BookOpen,
   Building2,
   AlertTriangle,
@@ -32,6 +31,8 @@ import {
   formatCurrencyINR,
 } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
+import { useLanguage } from "@/lib/i18n-context";
+import { BackButton } from "@/components/back-button";
 
 interface SelectedEvidenceItem {
   title: string;
@@ -58,6 +59,7 @@ function SchemeDetailContent() {
   const params = useParams();
   const schemeSlug = params.id as string;
   const { profile } = useProfile();
+  const { localizeScheme, isRtl, t } = useLanguage();
 
   const [scheme, setScheme] = useState<Scheme | null>(null);
   const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
@@ -114,7 +116,7 @@ function SchemeDetailContent() {
       <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-sm text-gray-500 font-medium">
-          Executing deterministic rules and retrieving Gazette citations...
+          {t("common.loading")}
         </p>
       </div>
     );
@@ -132,13 +134,13 @@ function SchemeDetailContent() {
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 cursor-pointer shadow-xs"
             >
-              Retry
+              {t("common.retry")}
             </button>
             <Link
               href="/schemes"
               className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 shadow-xs"
             >
-              ← Back to Discovery
+              ← {t("detail.back")}
             </Link>
           </div>
         </div>
@@ -152,7 +154,7 @@ function SchemeDetailContent() {
         <h2 className="text-xl font-bold text-gray-800">Scheme Not Found</h2>
         <p className="text-sm text-gray-500">The requested scheme could not be located in the repository.</p>
         <Link href="/schemes" className="text-sm text-indigo-600 font-semibold underline">
-          ← Back to Schemes Discovery
+          ← {t("detail.back")}
         </Link>
       </div>
     );
@@ -160,25 +162,23 @@ function SchemeDetailContent() {
 
   const status = eligibility?.status || "UNDETERMINED";
   const portalUrl = scheme.source?.url || "https://india.gov.in";
+  const { displayName, displayDescription } = localizeScheme(scheme);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div
+      dir={isRtl ? "rtl" : "ltr"}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8"
+    >
       {/* Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
-        <Link
-          href="/schemes"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Schemes
-        </Link>
+        <BackButton fallbackHref="/schemes" labelOverride={t("detail.back")} />
 
         <button
           onClick={handleRunAgenticWorkflow}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition-colors shadow-2xs"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
         >
           <Play className="w-3.5 h-3.5 fill-indigo-600" />
-          Run LangGraph Workflow Agent
+          {t("detail.agentWorkflow")}
         </button>
       </div>
 
@@ -203,22 +203,22 @@ function SchemeDetailContent() {
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200"
           >
-            Official Portal <ExternalLink className="w-3.5 h-3.5" />
+            {t("detail.officialPortal")} <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
 
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#17213F] leading-tight">
-            {scheme.name}
+            {displayName}
           </h1>
           <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-gray-400" />
-            Nodal Authority: {scheme.department || "Government of India"}
+            {t("detail.nodalAuthority")}: {scheme.department || "Government of India"}
           </p>
         </div>
 
         <p className="text-sm text-[#475467] leading-relaxed max-w-4xl">
-          {scheme.description}
+          {displayDescription}
         </p>
       </div>
 
@@ -252,7 +252,7 @@ function SchemeDetailContent() {
               </span>
 
               <span className="text-xs font-semibold text-gray-600">
-                Evaluation: {eligibility?.completeness || "COMPLETE"}
+                {t("detail.evaluationCompleteness")}: {eligibility?.completeness || "COMPLETE"}
               </span>
             </div>
 
@@ -265,7 +265,7 @@ function SchemeDetailContent() {
               <div className="bg-white/80 rounded-xl p-4 border border-gray-200 text-xs text-gray-700 leading-relaxed space-y-2">
                 <div className="flex items-center gap-2 font-semibold text-gray-900">
                   <Sparkles className="w-4 h-4 text-indigo-600" />
-                  <span>Plain-Language Synthesis</span>
+                  <span>{t("detail.plainSynthesis")}</span>
                   <span className="text-[10px] font-normal text-gray-500 font-mono">
                     ({actionPlan.explanation.provider === "gemini" ? "Gemini 3.8 Flash" : "Deterministic Fallback"})
                   </span>
@@ -282,24 +282,24 @@ function SchemeDetailContent() {
 
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs min-w-[220px] text-xs space-y-2 shrink-0">
             <span className="font-bold text-gray-800 uppercase tracking-wider text-[10px] block border-b pb-1">
-              Active Evaluation Profile
+              {t("detail.activeProfile")}
             </span>
             <div className="flex justify-between text-gray-600">
-              <span>State:</span>
+              <span>{t("common.state", "State")}:</span>
               <strong className="text-gray-900">{profile.state || "Not set"}</strong>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Occupation:</span>
+              <span>{t("common.occupation", "Occupation")}:</span>
               <strong className="text-gray-900 capitalize">{profile.occupation || "Not set"}</strong>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Income:</span>
+              <span>{t("common.income", "Income")}:</span>
               <strong className="text-gray-900">
                 {profile.annual_income_inr ? `₹${formatCurrencyINR(profile.annual_income_inr)}` : "Not set"}
               </strong>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Landholding:</span>
+              <span>{t("common.landholding", "Landholding")}:</span>
               <strong className="text-gray-900">
                 {profile.landholding_acres != null ? `${profile.landholding_acres} Acres` : "Not provided"}
               </strong>
@@ -308,7 +308,7 @@ function SchemeDetailContent() {
               href="/profile"
               className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold block text-center pt-1 border-t mt-1"
             >
-              Edit Demographic Profile →
+              {t("detail.editProfile")}
             </Link>
           </div>
         </div>
@@ -319,14 +319,14 @@ function SchemeDetailContent() {
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-base text-[#17213F]">
-              Criterion-by-Criterion Evaluation Matrix
+              {t("detail.evalMatrix")}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              Every rule is deterministically tested against your profile attributes. Zero LLM hallucinations.
+              {t("detail.evalMatrixDesc")}
             </p>
           </div>
           <span className="text-xs font-mono bg-gray-100 px-2.5 py-1 rounded text-gray-600 font-medium">
-            {scheme.criteria?.length || 0} Official Rules
+            {scheme.criteria?.length || 0} {t("detail.officialRules")}
           </span>
         </div>
 
@@ -334,11 +334,11 @@ function SchemeDetailContent() {
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="p-4">Criterion & Description</th>
-                <th className="p-4">Rule Condition</th>
-                <th className="p-4">Your Profile Value</th>
-                <th className="p-4">Result State</th>
-                <th className="p-4">Official Citation & Evidence</th>
+                <th className="p-4">{t("detail.criterionHeader")}</th>
+                <th className="p-4">{t("detail.conditionHeader")}</th>
+                <th className="p-4">{t("detail.profileValueHeader")}</th>
+                <th className="p-4">{t("detail.resultStateHeader")}</th>
+                <th className="p-4">{t("detail.evidenceHeader")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -373,7 +373,7 @@ function SchemeDetailContent() {
                         <span>{String(crit.user_provided_value)}</span>
                       ) : (
                         <span className="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-normal">
-                          Missing attribute
+                          {t("detail.missingAttribute")}
                         </span>
                       )}
                     </td>
@@ -381,19 +381,19 @@ function SchemeDetailContent() {
                     <td className="p-4">
                       {isMet ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> MET
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> {t("detail.met")}
                         </span>
                       ) : isNotMet ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">
-                          <XCircle className="w-3 h-3 text-rose-600" /> NOT MET
+                          <XCircle className="w-3 h-3 text-rose-600" /> {t("detail.notMet")}
                         </span>
                       ) : crit.status === "needs_verification" ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 font-bold text-[10px]">
-                          <ShieldCheck className="w-3 h-3 text-purple-600" /> NEEDS VERIFICATION
+                          <ShieldCheck className="w-3 h-3 text-purple-600" /> {t("detail.needsVerification")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
-                          <HelpCircle className="w-3 h-3 text-amber-600" /> UNKNOWN
+                          <HelpCircle className="w-3 h-3 text-amber-600" /> {t("detail.unknown")}
                         </span>
                       )}
                     </td>
@@ -414,7 +414,7 @@ function SchemeDetailContent() {
                           <span>{crit.source_ref}</span>
                         </button>
                       ) : (
-                        <span className="text-gray-400">Clause in Gazette</span>
+                        <span className="text-gray-400">{t("detail.clauseInGazette")}</span>
                       )}
                     </td>
                   </tr>
@@ -431,10 +431,10 @@ function SchemeDetailContent() {
         <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div>
             <h3 className="font-bold text-lg text-[#17213F]">
-              Personalized Application Action Plan
+              {t("detail.actionPlanTitle")}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              Step-by-step roadmap to successfully prepare and apply for this scheme.
+              {t("detail.actionPlanDesc")}
             </p>
           </div>
 
@@ -463,7 +463,7 @@ function SchemeDetailContent() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-indigo-600 font-semibold mt-2 hover:underline"
                     >
-                      Visit Official Application Portal <ExternalLink className="w-3 h-3" />
+                      {t("detail.visitPortal")} <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
                 </div>
@@ -476,10 +476,10 @@ function SchemeDetailContent() {
         <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div>
             <h3 className="font-bold text-lg text-[#17213F]">
-              Required Documents Checklist
+              {t("detail.documentsChecklistTitle")}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              Verify you have these documents ready prior to online portal submission.
+              {t("detail.documentsChecklistDesc")}
             </p>
           </div>
 
@@ -574,11 +574,11 @@ function SchemeDetailContent() {
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-bold text-sm text-gray-900">Official Source Citation</h3>
+                <h3 className="font-bold text-sm text-gray-900">{t("detail.sourceCitation")}</h3>
               </div>
               <button
                 onClick={() => setSelectedEvidence(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold cursor-pointer"
               >
                 ×
               </button>
@@ -586,7 +586,7 @@ function SchemeDetailContent() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <span className="font-semibold text-gray-500 block">Referenced Clause:</span>
+                <span className="font-semibold text-gray-500 block">{t("detail.referencedClause")}</span>
                 <span className="font-bold text-gray-900 text-sm">
                   {selectedEvidence.source_ref}
                 </span>
@@ -594,7 +594,7 @@ function SchemeDetailContent() {
 
               {selectedEvidence.evidence && (
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
-                  <span className="font-semibold text-gray-700 block">Official Excerpt Quote:</span>
+                  <span className="font-semibold text-gray-700 block">{t("detail.officialQuote")}</span>
                   <blockquote className="italic text-gray-800 leading-relaxed border-l-2 border-indigo-400 pl-3">
                     &ldquo;{selectedEvidence.evidence.quote || selectedEvidence.evidence.text}&rdquo;
                   </blockquote>
@@ -614,9 +614,9 @@ function SchemeDetailContent() {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedEvidence(null)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
               >
-                Close Citation
+                {t("detail.closeCitation")}
               </button>
             </div>
           </div>
@@ -708,9 +708,9 @@ function SchemeDetailContent() {
             <div className="pt-2 border-t flex justify-end">
               <button
                 onClick={() => setShowWorkflowModal(false)}
-                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold cursor-pointer"
               >
-                Close Trace
+                {t("detail.closeTrace")}
               </button>
             </div>
           </div>

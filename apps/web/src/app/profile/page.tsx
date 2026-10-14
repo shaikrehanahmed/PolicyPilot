@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/lib/profile-context";
 import { validateProfile } from "@/lib/api";
+import { BackButton } from "@/components/back-button";
+import { useLanguage } from "@/lib/i18n-context";
 
 const INDIAN_STATES = [
   { code: "TS", name: "Telangana" },
@@ -34,6 +36,7 @@ const INDIAN_STATES = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { t, isRtl } = useLanguage();
   const { profile, updateProfile, loadDemoProfile, clearProfile } = useProfile();
 
   const [validationState, setValidationState] = useState<{
@@ -72,19 +75,22 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div dir={isRtl ? "rtl" : "ltr"} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <div>
+        <BackButton fallbackHref="/schemes" />
+      </div>
+
       {/* Header */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider">
           <User className="w-3.5 h-3.5" />
-          Citizen Demographic Onboarding
+          {t("nav.demoProfile")}
         </div>
         <h1 className="text-3xl font-extrabold text-[#17213F] tracking-tight">
-          Citizen Eligibility Profile
+          {t("profile.title")}
         </h1>
         <p className="text-sm text-[#667085]">
-          Fill in your demographic details. PolicyPilot uses deterministic rule formulas to match
-          and assess government schemes. Only demographic bands are evaluated; no PII is stored.
+          {t("profile.subtitle")}
         </p>
       </div>
 
@@ -92,7 +98,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-gray-700 font-medium">
           <Sparkles className="w-4 h-4 text-indigo-600" />
-          <span>Quick Evaluation Presets:</span>
+          <span>{t("profile.presetsTitle")}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -773,18 +779,18 @@ export default function ProfilePage() {
             type="button"
             onClick={handleValidate}
             disabled={isValidating}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isValidating ? "animate-spin" : ""}`} />
-            Validate Profile via API
+            {t("profile.validateBtn")}
           </button>
 
           <button
             type="button"
             onClick={handleSaveAndDiscover}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
           >
-            Save & Discover Eligible Schemes
+            {t("profile.saveBtn")}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

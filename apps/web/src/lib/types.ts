@@ -274,6 +274,7 @@ export interface RescueDiagnoseRequest {
   selected_symptom_code?: string | null;
   supplied_facts?: Record<string, string>;
   profile?: CitizenProfile;
+  lang?: LanguageCode;
 }
 
 export interface RescueDiagnoseResponse {
@@ -284,6 +285,9 @@ export interface RescueDiagnoseResponse {
   matched_symptom_code?: string | null;
   verdict: TriageVerdictType;
   critical_trap_warning?: string | null;
+  actor_explanation?: string | null;
+  simple_explanation?: string | null;
+  polite_office_draft?: string | null;
   clarification_questions: RescueClarificationQuestion[];
   epistemic_state: {
     known_facts: string[];
@@ -297,3 +301,104 @@ export interface RescueDiagnoseResponse {
   steps_log: WorkflowStepLog[];
   disclaimer: string;
 }
+
+export type LanguageCode = "en" | "te" | "hi" | "ur";
+
+export interface AnnouncementItem {
+  id: string;
+  scheme_slug?: string | null;
+  official_scheme_name: string;
+  title: string;
+  summary: string;
+  benefits_summary?: string | null;
+  eligibility_summary?: string | null;
+  deadline_info?: string | null;
+  level: "CENTRAL" | "STATE" | "CONCURRENT";
+  state?: string | null;
+  department: string;
+  source_id: string;
+  source_title: string;
+  source_url: string;
+  application_url?: string | null;
+  published_date?: string | null;
+  last_verified_at: string;
+  verification_status: "VERIFIED" | "STALE" | "REQUIRES_REVIEW" | "CONFLICTING";
+  content_hash: string;
+  is_new_or_updated: boolean;
+  review_note?: string | null;
+}
+
+export interface SourceChangeCheckResult {
+  checked_at: string;
+  monitoring_mode: string;
+  scheduler_active: boolean;
+  external_requirements_note: string;
+  total_sources_checked: number;
+  verified_announcements_count: number;
+  awaiting_review_count: number;
+  duplicates_prevented: number;
+  detected_changes: string[];
+  announcements: AnnouncementItem[];
+}
+
+// --- Conversational Assistant & Cloud TTS Types ---
+export interface AssistantMessageItem {
+  role: "user" | "assistant";
+  content: string;
+  timestamp?: string;
+}
+
+export interface AssistantActionDirective {
+  action_type: "NONE" | "NAVIGATE" | "GO_BACK" | "STOP_AUDIO" | "SWITCH_LANGUAGE";
+  target_path?: string | null;
+  target_lang?: LanguageCode | null;
+}
+
+export interface AssistantChatRequest {
+  message: string;
+  lang: LanguageCode;
+  current_path?: string;
+  current_scheme_slug?: string | null;
+  profile?: CitizenProfile;
+  history?: AssistantMessageItem[];
+}
+
+export interface AssistantChatResponse {
+  status: string;
+  reply_text: string;
+  lang: LanguageCode;
+  intent_classified: string;
+  action: AssistantActionDirective;
+  referenced_schemes: Scheme[];
+  citations: Record<string, unknown>[];
+  follow_up_question?: string | null;
+  provider_used: string;
+  is_fallback: boolean;
+}
+
+export interface TTSCapabilities {
+  configured_provider: string;
+  cloud_tts_ready: boolean;
+  model_id: string;
+  supported_languages: Record<
+    string,
+    {
+      cloud_supported: boolean;
+      elevenlabs_model_compatible: boolean;
+      speech_lang_tag: string;
+    }
+  >;
+  configuration_note: string;
+}
+
+export interface TTSSynthesizeResponse {
+  status: string;
+  lang: LanguageCode;
+  provider_used: string;
+  cloud_audio_available: boolean;
+  audio_base64?: string | null;
+  mime_type: string;
+  text_chunks: string[];
+  limitation_notice?: string | null;
+}
+
