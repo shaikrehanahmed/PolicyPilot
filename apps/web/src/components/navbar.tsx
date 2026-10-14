@@ -8,20 +8,14 @@ import {
   FileText,
   ShieldCheck,
   User,
-  Sparkles,
-  Database,
   ChevronDown,
   Menu,
   X,
-  Server,
-  Layers,
   Globe,
   Mic,
   Bell,
   Check,
 } from "lucide-react";
-import { fetchHealth } from "@/lib/api";
-import { SystemHealth } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
 import { useI18n } from "@/lib/i18n-context";
 import { VoiceAccessibilityBar } from "./voice-accessibility-bar";
@@ -31,44 +25,17 @@ export function Navbar() {
   const { loadDemoProfile, profile } = useProfile();
   const { language, setLanguage, t, supportedLanguages } = useI18n();
 
-  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [showDemoMenu, setShowDemoMenu] = useState(false);
-  const [showStatusPanel, setShowStatusPanel] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
 
-  const statusRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchHealth()
-      .then(setHealth)
-      .catch(() => {
-        // Fallback indicator when api server is booting
-        setHealth({
-          status: "healthy",
-          version: "0.1.0",
-          environment: "local",
-          demo_mode: true,
-          database: "disconnected",
-          pgvector: "unavailable",
-          llm_status: "deterministic_fallback",
-          llm_model: "gemini-3.8-flash",
-          embedding_model: "gemini-embedding-2",
-          embedding_dim: 768,
-          retrieval_mode: "lexical",
-        });
-      });
-  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
-        setShowStatusPanel(false);
-      }
       if (demoRef.current && !demoRef.current.contains(event.target as Node)) {
         setShowDemoMenu(false);
       }
@@ -90,10 +57,6 @@ export function Navbar() {
 
   const currentLangObj = supportedLanguages.find((l) => l.code === language) || supportedLanguages[0];
 
-  const isDbConnected = health?.database === "connected";
-  const isLlmConnected = health?.llm_status === "connected";
-  const isVectorRetrieval = health?.retrieval_mode === "hybrid_vector";
-
   return (
     <header dir={language === "ur" ? "rtl" : "ltr"} className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -112,133 +75,6 @@ export function Navbar() {
               </span>
             </div>
           </Link>
-
-          {/* Neutral Demo Status Badge & System Status Disclosure */}
-          <div className="relative" ref={statusRef}>
-            <button
-              onClick={() => setShowStatusPanel(!showStatusPanel)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80 transition-colors cursor-pointer"
-              title="Click to view System Status"
-              aria-expanded={showStatusPanel}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-semibold text-slate-700">{t("nav.demoStatus")}</span>
-              <ChevronDown
-                className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
-                  showStatusPanel ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Compact System Status Disclosure Panel */}
-            {showStatusPanel && (
-              <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50 text-xs space-y-3.5 animate-in fade-in zoom-in-95 duration-100">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <Server className="w-4 h-4 text-[#4F46E5]" />
-                    <span className="font-bold text-gray-900 text-xs">{t("nav.systemStatus")}</span>
-                  </div>
-                  <span className="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">
-                    v{health?.version || "0.1.0"}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {/* Rules Engine */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-gray-700">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>{t("nav.rulesEngine")}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        Deterministic Python evaluator (Zero LLM reliance)
-                      </p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 text-[10px] shrink-0">
-                      Deterministic
-                    </span>
-                  </div>
-
-                  {/* AI Provider */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-gray-700">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                        <span>{t("nav.aiProvider")}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {isLlmConnected
-                          ? "Connected to Google Gemini provider"
-                          : "Deterministic gazette synthesis (safe fallback)"}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded font-semibold text-[10px] shrink-0 ${
-                        isLlmConnected
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-slate-100 text-slate-700 border border-slate-200"
-                      }`}
-                    >
-                      {isLlmConnected ? "Gemini connected" : "Deterministic fallback"}
-                    </span>
-                  </div>
-
-                  {/* Evidence Retrieval */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-gray-700">
-                        <Layers className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>{t("nav.retrieval")}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {isVectorRetrieval
-                          ? "Semantic vector search with pgvector"
-                          : "Exact multi-field gazette clause matching"}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded font-semibold text-[10px] shrink-0 ${
-                        isVectorRetrieval
-                          ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                          : "bg-blue-50 text-blue-700 border border-blue-200"
-                      }`}
-                    >
-                      {isVectorRetrieval ? "Hybrid vector" : "Lexical retrieval"}
-                    </span>
-                  </div>
-
-                  {/* Database Engine */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-gray-700">
-                        <Database className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>{t("nav.database")}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {isDbConnected
-                          ? "PostgreSQL with pgvector"
-                          : "In-memory seed repository for local demo"}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded font-semibold text-[10px] shrink-0 ${
-                        isDbConnected
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}
-                    >
-                      {isDbConnected ? "PostgreSQL connected" : "Demo repository"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-gray-100 text-[10px] text-gray-400 text-center">
-                  All criteria anchored to official ministry notifications.
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Desktop Primary Nav Links */}
           <nav className="hidden lg:flex items-center gap-1">
