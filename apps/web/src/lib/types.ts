@@ -236,6 +236,9 @@ export interface RescueRemediationStep {
   action_title: string;
   detailed_instruction: string;
   required_items_to_carry: string[];
+  target_actor?: string;
+  evidence_reference?: string;
+  portal_url?: string;
 }
 
 export interface RescueCitation {
@@ -288,6 +291,7 @@ export interface RescueDiagnoseResponse {
   actor_explanation?: string | null;
   simple_explanation?: string | null;
   polite_office_draft?: string | null;
+  draft_office_letter?: string | null;
   clarification_questions: RescueClarificationQuestion[];
   epistemic_state: {
     known_facts: string[];

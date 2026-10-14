@@ -15,6 +15,8 @@ import {
   Globe,
   Mic,
   CreditCard,
+  Scale,
+  MoreHorizontal,
 } from "lucide-react";
 import { LanguageCode } from "@/lib/types";
 import { useProfile } from "@/lib/profile-context";
@@ -24,18 +26,21 @@ import { VoiceAccessibilityBar } from "./voice-accessibility-bar";
 export function Navbar() {
   const pathname = usePathname();
   const { loadDemoProfile, profile } = useProfile();
-  const { lang, setLang, t } = useLanguage();
+  const { lang, setLang, isRtl, t } = useLanguage();
 
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
   const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const demoRef = useRef<HTMLDivElement>(null);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (demoRef.current && !demoRef.current.contains(event.target as Node)) {
-        setShowDemoMenu(false);
+      if (
+        toolsMenuRef.current &&
+        !toolsMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowToolsMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -44,33 +49,36 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/schemes", label: t("nav_schemes"), icon: Compass },
-    { href: "/updates", label: t("nav_announcements"), icon: Bell },
+    { href: "/updates", label: t("nav_updates"), icon: Bell },
     { href: "/rescue", label: t("nav_rescue"), icon: ShieldCheck },
-    { href: "/pricing", label: "Plans & Pricing", icon: CreditCard },
+    { href: "/pricing", label: t("nav_pricing"), icon: CreditCard },
     { href: "/profile", label: t("nav_profile"), icon: User },
     { href: "/sources", label: t("nav_sources"), icon: FileText },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-        {/* Brand & Primary Navigation (Visible Demo Mode badge removed per Requirement H4) */}
-        <div className="flex items-center gap-3 lg:gap-5 min-w-0">
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white font-bold text-lg shadow-xs group-hover:bg-[#4338CA] transition-colors">
-              P
+    <header
+      dir={isRtl ? "rtl" : "ltr"}
+      className="sticky top-0 z-50 bg-[#F7F4EC]/95 backdrop-blur-md border-b border-[#D8D1C2]"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+        {/* Brand Monogram & Editorial Lockup */}
+        <div className="flex items-center gap-4 lg:gap-7 min-w-0">
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-[#163026] border border-[#C5A572]/50 flex items-center justify-center text-[#F7F4EC] shadow-sm group-hover:bg-[#1F4235] transition-colors">
+              <Scale className="w-5 h-5 text-[#C5A572]" />
             </div>
             <div className="truncate">
-              <span className="font-bold text-lg text-[#17213F] tracking-tight block leading-tight">
+              <span className="font-editorial font-semibold text-xl text-[#141815] tracking-tight block leading-none">
                 PolicyPilot
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-[#667085] block font-medium truncate">
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[#6B726C] block font-semibold mt-1 truncate">
                 {t("brand_tagline")}
               </span>
             </div>
           </Link>
 
-          {/* Desktop Primary Nav Links */}
+          {/* Desktop Primary Navigation */}
           <nav className="hidden xl:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -80,13 +88,17 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                     isActive
-                      ? "bg-[#4F46E5]/10 text-[#4F46E5]"
-                      : "text-[#667085] hover:text-[#17213F] hover:bg-gray-100/70"
+                      ? "bg-[#163026] text-[#F7F4EC] shadow-xs"
+                      : "text-[#4A524C] hover:text-[#141815] hover:bg-[#EFECE2]"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <Icon
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      isActive ? "text-[#C5A572]" : "text-[#6B726C]"
+                    }`}
+                  />
                   <span>{link.label}</span>
                 </Link>
               );
@@ -94,115 +106,176 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right Utility Cluster */}
-        <div className="hidden md:flex items-center gap-2 shrink-0">
-          {/* Global Language Selector */}
-          <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1">
-            <Globe className="w-3.5 h-3.5 text-[#4F46E5]" />
-            <select
-              aria-label="Select Language"
-              value={lang}
-              onChange={(e) => setLang(e.target.value as LanguageCode)}
-              className="bg-transparent text-xs font-bold text-[#17213F] focus:outline-none cursor-pointer"
-            >
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <option key={opt.code} value={opt.code}>
-                  {opt.nativeLabel} ({opt.code.toUpperCase()})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Voice Assistant Button */}
+        {/* Desktop Secondary Controls: Innovative 3-Dots Citizen Hub */}
+        <div className="hidden xl:flex items-center gap-2.5 shrink-0 relative" ref={toolsMenuRef}>
           <button
             type="button"
-            onClick={() => setShowVoiceDrawer(!showVoiceDrawer)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
-              showVoiceDrawer
-                ? "bg-[#4F46E5] text-white border-[#4F46E5]"
-                : "bg-white text-[#17213F] border-gray-200 hover:bg-gray-50"
+            onClick={() => setShowToolsMenu(!showToolsMenu)}
+            aria-expanded={showToolsMenu}
+            aria-label="Citizen Tools and Settings Menu"
+            title="Language, Voice Assistant, Persona & Quick Actions"
+            className={`btn-parchment flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shadow-xs ${
+              showToolsMenu ? "border-[#163026] bg-[#EFECE2]" : ""
             }`}
           >
-            <Mic className="w-3.5 h-3.5" />
-            <span>{t("voice_btn_speak")}</span>
+            <span className="font-bold text-[#163026] uppercase text-[11px] tracking-wider">
+              {lang.toUpperCase()}
+            </span>
+            <span className="w-1 h-1 rounded-full bg-[#C5A572]" />
+            <span className="text-[#4A524C] capitalize truncate max-w-[85px]">
+              {profile.occupation || "Citizen"}
+            </span>
+            <MoreHorizontal className="w-4 h-4 text-[#163026] ms-0.5" />
           </button>
 
-          {/* Profile Preset Selector */}
-          <div className="relative" ref={demoRef}>
-            <button
-              type="button"
-              onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200/80 text-[#17213F] rounded-md transition-colors border border-gray-200 cursor-pointer"
-            >
-              <span className="font-bold text-[#4F46E5] capitalize">
-                {profile.occupation || "Farmer"}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-            </button>
+          {showToolsMenu && (
+            <div className="absolute end-0 top-full mt-2 w-72 folio-card rounded-2xl p-4 shadow-2xl z-50 space-y-3.5 border border-[#D8D1C2]">
+              {/* Primary Action: Check Eligibility */}
+              <div>
+                <Link
+                  href="/profile"
+                  onClick={() => setShowToolsMenu(false)}
+                  className="btn-forest w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold shadow-sm"
+                >
+                  <ShieldCheck className="w-4 h-4 text-[#C5A572]" />
+                  <span>{t("nav_check_eligibility")}</span>
+                </Link>
+              </div>
 
-            {showDemoMenu && (
-              <div className="absolute end-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-50 text-xs">
+              {/* Voice & Chat Assistant Toggle */}
+              <div className="pt-2 border-t border-[#D8D1C2]">
                 <button
                   type="button"
                   onClick={() => {
-                    loadDemoProfile("farmer");
-                    setShowDemoMenu(false);
+                    setShowVoiceDrawer(!showVoiceDrawer);
+                    setShowToolsMenu(false);
                   }}
-                  className="w-full text-start px-3 py-2 hover:bg-indigo-50 flex flex-col gap-0.5 cursor-pointer"
+                  className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-[#EFECE2] text-xs font-semibold text-[#141815] transition cursor-pointer"
                 >
-                  <span className="font-semibold text-gray-900">Telangana Farmer (TS)</span>
-                  <span className="text-gray-500 text-[11px]">PM-KISAN & Rythu Bharosa</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    loadDemoProfile("student");
-                    setShowDemoMenu(false);
-                  }}
-                  className="w-full text-start px-3 py-2 hover:bg-indigo-50 flex flex-col gap-0.5 cursor-pointer"
-                >
-                  <span className="font-semibold text-gray-900">SC Student (DL)</span>
-                  <span className="text-gray-500 text-[11px]">Post-Matric Scholarship</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    loadDemoProfile("vulnerable_family");
-                    setShowDemoMenu(false);
-                  }}
-                  className="w-full text-start px-3 py-2 hover:bg-indigo-50 flex flex-col gap-0.5 cursor-pointer"
-                >
-                  <span className="font-semibold text-gray-900">Rural EWS Family (UP)</span>
-                  <span className="text-gray-500 text-[11px]">PM-JAY & PMAY-G</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[#E6ECE7] border border-[#CFDBD1] flex items-center justify-center text-[#163026]">
+                      <Mic className="w-3.5 h-3.5 text-[#8C6D3B]" />
+                    </div>
+                    <div className="text-start">
+                      <div className="font-bold">{t("voice_btn_speak")}</div>
+                      <div className="text-[10px] text-[#6B726C]">Multilingual Assistant</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-[#8C6D3B] bg-[#F2EADB] px-2 py-0.5 rounded">
+                    {showVoiceDrawer ? "Active" : "Open"}
+                  </span>
                 </button>
               </div>
-            )}
-          </div>
 
-          <Link
-            href="/profile"
-            className="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold rounded-md text-white bg-[#4F46E5] hover:bg-[#4338CA] transition-colors whitespace-nowrap"
-          >
-            Run Policy Analysis
-          </Link>
+              {/* Language Switcher */}
+              <div className="pt-2 border-t border-[#D8D1C2] space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#6B726C] px-1">
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="w-3 h-3 text-[#163026]" />
+                    Language / భాష / भाषा
+                  </span>
+                  <span className="font-mono text-[#163026]">{lang.toUpperCase()}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {LANGUAGE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.code}
+                      type="button"
+                      onClick={() => {
+                        setLang(opt.code);
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                        lang === opt.code
+                          ? "bg-[#163026] text-[#F7F4EC]"
+                          : "bg-[#FCFBF7] hover:bg-[#EFECE2] text-[#141815] border border-[#D8D1C2]"
+                      }`}
+                    >
+                      <span>{opt.nativeLabel}</span>
+                      <span className="text-[10px] font-mono opacity-80">{opt.code.toUpperCase()}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Demo Persona Preset */}
+              <div className="pt-2 border-t border-[#D8D1C2] space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#6B726C] px-1">
+                  <span className="flex items-center gap-1.5">
+                    <User className="w-3 h-3 text-[#163026]" />
+                    {t("persona_label")}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#163026] capitalize">
+                    {profile.occupation || "Farmer"}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadDemoProfile("farmer");
+                      setShowToolsMenu(false);
+                    }}
+                    className={`w-full text-start px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
+                      profile.occupation === "farmer"
+                        ? "bg-[#E6ECE7] text-[#163026] font-bold border border-[#CFDBD1]"
+                        : "hover:bg-[#EFECE2] text-[#4A524C]"
+                    }`}
+                  >
+                    <span>🌾 Telangana Farmer (TS)</span>
+                    <span className="text-[10px] text-[#6B726C]">PM-KISAN</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadDemoProfile("student");
+                      setShowToolsMenu(false);
+                    }}
+                    className={`w-full text-start px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
+                      profile.occupation === "student"
+                        ? "bg-[#E6ECE7] text-[#163026] font-bold border border-[#CFDBD1]"
+                        : "hover:bg-[#EFECE2] text-[#4A524C]"
+                    }`}
+                  >
+                    <span>🎓 SC Student (DL)</span>
+                    <span className="text-[10px] text-[#6B726C]">NSP Scholarship</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadDemoProfile("vulnerable_family");
+                      setShowToolsMenu(false);
+                    }}
+                    className={`w-full text-start px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
+                      profile.occupation === "vulnerable_family"
+                        ? "bg-[#E6ECE7] text-[#163026] font-bold border border-[#CFDBD1]"
+                        : "hover:bg-[#EFECE2] text-[#4A524C]"
+                    }`}
+                  >
+                    <span>🏠 Rural Household (UP)</span>
+                    <span className="text-[10px] text-[#6B726C]">AB-PMJAY</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Mobile Hamburger */}
+        {/* Mobile Menu Trigger */}
         <div className="flex xl:hidden items-center gap-2">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            className="btn-parchment p-2.5 rounded-lg text-[#141815]"
             aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Expandable Global Voice Assistant Drawer */}
+      {/* Expandable Voice & Chat Counsel Drawer */}
       {showVoiceDrawer && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 border-t border-gray-100 bg-slate-50/90">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 border-t border-[#D8D1C2] bg-[#EFECE2]/90">
           <VoiceAccessibilityBar
             compact
             onCloseDrawer={() => setShowVoiceDrawer(false)}
@@ -210,19 +283,19 @@ export function Navbar() {
         </div>
       )}
 
-      {/* Mobile Drawer */}
+      {/* Intentional Mobile Navigation Drawer (320px–1024px) */}
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-gray-200 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg max-h-[85vh] overflow-y-auto">
-          <div className="flex items-center justify-between bg-slate-100 px-3 py-2 rounded-lg">
-            <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-[#4F46E5]" />
-              Language / భాష / भाषा
+        <div className="xl:hidden border-t border-[#D8D1C2] bg-[#FCFBF7] px-4 pt-4 pb-8 space-y-5 shadow-xl max-h-[85vh] overflow-y-auto">
+          <div className="flex items-center justify-between embossed-well px-3.5 py-2.5 rounded-xl">
+            <span className="text-xs font-bold text-[#141815] flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#163026]" />
+              <span>Language / భాష / भाषा</span>
             </span>
             <select
               aria-label="Select Language Mobile"
               value={lang}
               onChange={(e) => setLang(e.target.value as LanguageCode)}
-              className="bg-white border border-gray-300 rounded px-2 py-1 text-xs font-bold text-[#17213F]"
+              className="bg-[#FCFBF7] border border-[#D8D1C2] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#141815]"
             >
               {LANGUAGE_OPTIONS.map((opt) => (
                 <option key={opt.code} value={opt.code}>
@@ -237,7 +310,7 @@ export function Navbar() {
             onCloseDrawer={() => setMobileMenuOpen(false)}
           />
 
-          <nav className="space-y-1">
+          <nav className="grid grid-cols-1 gap-1.5">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =
@@ -247,26 +320,68 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                     isActive
-                      ? "bg-[#4F46E5]/10 text-[#4F46E5]"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-[#163026] text-[#F7F4EC]"
+                      : "text-[#141815] hover:bg-[#EFECE2]"
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${
+                      isActive ? "text-[#C5A572]" : "text-[#6B726C]"
+                    }`}
+                  />
                   <span className="truncate">{link.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          <Link
-            href="/profile"
-            onClick={() => setMobileMenuOpen(false)}
-            className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-[#4F46E5] text-white font-semibold text-xs transition-colors"
-          >
-            Run Policy Analysis
-          </Link>
+          <div className="pt-3 border-t border-[#D8D1C2] space-y-2.5">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#6B726C] px-1">
+              {t("persona_label")}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  loadDemoProfile("farmer");
+                  setMobileMenuOpen(false);
+                }}
+                className="btn-parchment text-start px-3.5 py-2.5 text-xs rounded-xl font-semibold"
+              >
+                Telangana Farmer (TS)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  loadDemoProfile("student");
+                  setMobileMenuOpen(false);
+                }}
+                className="btn-parchment text-start px-3.5 py-2.5 text-xs rounded-xl font-semibold"
+              >
+                SC Student (DL)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  loadDemoProfile("vulnerable_family");
+                  setMobileMenuOpen(false);
+                }}
+                className="btn-parchment text-start px-3.5 py-2.5 text-xs rounded-xl font-semibold"
+              >
+                Rural Household (UP)
+              </button>
+            </div>
+
+            <Link
+              href="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="btn-forest w-full flex items-center justify-center py-3 px-4 rounded-xl font-semibold text-xs"
+            >
+              {t("nav_check_eligibility")}
+            </Link>
+          </div>
         </div>
       )}
     </header>

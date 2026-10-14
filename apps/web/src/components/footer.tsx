@@ -1,159 +1,130 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, ExternalLink } from "lucide-react";
+import { Scale, Server, ShieldCheck } from "lucide-react";
+import { fetchHealth } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n-context";
+import { SystemHealth } from "@/lib/types";
 
 export function Footer() {
-  const { t, isRtl } = useLanguage();
+  const { isRtl, t } = useLanguage();
+  const [health, setHealth] = useState<SystemHealth | null>(null);
+
+  useEffect(() => {
+    fetchHealth()
+      .then(setHealth)
+      .catch(() => {});
+  }, []);
 
   return (
-    <footer dir={isRtl ? "rtl" : "ltr"} className="bg-white border-t border-[#E5E7EB] mt-16 text-sm text-[#667085]">
-      {/* Top Disclaimer Section */}
-      <div className="bg-[#F8FAFC] border-b border-[#E5E7EB] py-6 px-4">
-        <div className="max-w-7xl mx-auto flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-[#4F46E5] shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed text-[#475467]">
-            <strong className="text-[#17213F] font-semibold">
-              {t("footer.disclaimerTitle")}
-            </strong>{" "}
-            {t("footer.disclaimerText")}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer Links & Team Information */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="space-y-3 md:col-span-2">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[#4F46E5] flex items-center justify-center text-white font-bold text-sm">
-              P
+    <footer
+      dir={isRtl ? "rtl" : "ltr"}
+      className="bg-[#0F221A] text-[#E6ECE7] border-t border-[#C5A572]/30 mt-20 no-print"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          {/* Brand Colophon */}
+          <div className="md:col-span-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#163026] border border-[#C5A572]/50 flex items-center justify-center">
+                <Scale className="w-4 h-4 text-[#C5A572]" />
+              </div>
+              <span className="font-editorial text-lg font-semibold text-[#F7F4EC] tracking-tight">
+                PolicyPilot
+              </span>
             </div>
-            <span className="font-bold text-base text-[#17213F]">PolicyPilot</span>
+            <p className="text-[#B8C4BB] leading-relaxed max-w-sm">
+              An evidence-grounded public-benefit navigation and institutional compliance
+              platform. Every eligibility rule and portal defect remediation step is
+              anchored to verifiable Gazette clauses.
+            </p>
           </div>
-          <p className="text-xs max-w-md leading-relaxed text-[#667085]">
-            {t("footer.mission")}
-          </p>
-          <div className="pt-2 text-xs text-gray-500">
-            <span className="font-semibold text-gray-700">{t("footer.team")}</span>
+
+          {/* Directory Links */}
+          <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6">
+            <div className="space-y-2.5">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#C5A572]">
+                Navigation
+              </div>
+              <ul className="space-y-2 text-[#D5E0D7]">
+                <li>
+                  <Link href="/schemes" className="hover:text-white transition">
+                    {t("nav_schemes")}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/profile" className="hover:text-white transition">
+                    {t("nav_profile")}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/rescue" className="hover:text-white transition">
+                    {t("nav_rescue")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#C5A572]">
+                Dossier &amp; Billing
+              </div>
+              <ul className="space-y-2 text-[#D5E0D7]">
+                <li>
+                  <Link href="/updates" className="hover:text-white transition">
+                    {t("nav_updates")}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing" className="hover:text-white transition">
+                    {t("nav_pricing")}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sources" className="hover:text-white transition">
+                    {t("nav_sources")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 space-y-2.5">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#C5A572]">
+                Statutory Guardrails
+              </div>
+              <p className="text-[11px] text-[#B8C4BB] leading-relaxed">
+                Zero-PII client &amp; server redaction. AI never overrides deterministic
+                statutory eligibility criteria.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div>
-          <h4 className="font-semibold text-xs text-[#17213F] uppercase tracking-wider mb-3">
-            {t("footer.modules")}
-          </h4>
-          <ul className="space-y-2 text-xs">
-            <li>
-              <Link href="/schemes" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.schemes")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/rescue" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.rescue")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/updates" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.updates")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/pricing" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.pricing")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/profile" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.profile")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/sources" className="hover:text-[#4F46E5] transition-colors">
-                {t("nav.sources")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-semibold text-xs text-[#17213F] uppercase tracking-wider mb-3">
-            {t("footer.portals")}
-          </h4>
-          <ul className="space-y-2 text-xs">
-            <li>
-              <a
-                href="https://pmkisan.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
-              >
-                PM-KISAN Portal <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://nha.gov.in/PM-JAY"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
-              >
-                Ayushman Bharat PM-JAY <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://pmayg.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
-              >
-                PMAY-Gramin Portal <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://scholarships.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
-              >
-                National Scholarship Portal <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://rythubharosa.telangana.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
-              >
-                Telangana Rythu Bharosa <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* System Architecture & Honest Prototype Data Disclosure (Requirement H4) */}
-      <div className="border-t border-[#E5E7EB] bg-[#F8FAFC] py-4 px-4 text-xs text-[#667085]">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-[#17213F]">PolicyPilot System Status:</span>
+        {/* Honest Infrastructure & Prototype Data Disclosure */}
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-[#99A89E]">
+          <div className="flex flex-wrap items-center gap-2">
+            <Server className="w-3.5 h-3.5 text-[#C5A572] shrink-0" />
             <span>
-              Deterministic Rules Evaluator Active · In-Memory User Session Persistence · Razorpay Test Sandbox Verified
+              Architecture Telemetry: Evaluator ={" "}
+              <strong className="text-[#F7F4EC]">Deterministic Python</strong> ·
+              Retrieval ={" "}
+              <strong className="text-[#F7F4EC]">
+                {health?.retrieval_mode || "lexical"}
+              </strong>{" "}
+              · Repository ={" "}
+              <strong className="text-[#F7F4EC]">
+                {health?.database === "connected"
+                  ? "PostgreSQL Connected"
+                  : "Verified Seed Repository (Session Store)"}
+              </strong>
             </span>
           </div>
-          <div className="text-[11px] text-gray-500">
-            For production PostgreSQL persistence, configure DATABASE_URL in services/api/.env
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#C5A572] shrink-0" />
+            <span>Independent civic-technology service. Not a government agency.</span>
           </div>
         </div>
-      </div>
-
-      <div className="border-t border-[#E5E7EB] py-4 text-center text-xs text-[#98A2B3]">
-        © 2026 PolicyPilot • Built for HACK-X 2026 by Team Axiom • Evidence-Grounded Policy Navigation
       </div>
     </footer>
   );

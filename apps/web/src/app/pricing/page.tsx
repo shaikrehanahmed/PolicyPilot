@@ -5,8 +5,7 @@ import {
   Building2,
   CheckCircle2,
   Lock,
-  ShieldCheck,
-  Sparkles,
+  Scale,
   Users,
   UserPlus,
   UserX,
@@ -25,7 +24,7 @@ import {
 import { useLanguage } from "@/lib/i18n-context";
 import { BackButton } from "@/components/back-button";
 
-export default function PlansAndPricingPage() {
+export default function EditorialPricingPage() {
   const { isRtl } = useLanguage();
 
   const [pricing, setPricing] = useState<any>({
@@ -35,7 +34,7 @@ export default function PlansAndPricingPage() {
   });
   const [account, setAccount] = useState<any>(null);
 
-  // Live Organization Seat Calculator State (Default 100 seats -> ₹1,900 -> 25% off ₹475 -> ₹1,425)
+  // Exact Dynamic Seat Calculator (100 seats @ ₹19 = ₹1,900 -> 25% off ₹475 -> ₹1,425)
   const [seats, setSeats] = useState<number>(100);
   const [orgQuote, setOrgQuote] = useState<any>({
     seats: 100,
@@ -47,18 +46,20 @@ export default function PlansAndPricingPage() {
     effective_per_seat_inr: "14.25",
   });
 
-  // Organization Dashboard State
-  const [orgName, setOrgName] = useState("Global Institute Scholarship Cell");
+  const [orgName, setOrgName] = useState("Global Institute Scholarship Desk");
   const [orgDashboard, setOrgDashboard] = useState<any>(null);
   const [memberEmail, setMemberEmail] = useState("");
 
-  // Checkout Status
   const [checkoutBanner, setCheckoutBanner] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchCurrentPricing(), fetchBillingAccount(), fetchOrganizationQuote(100)])
+    Promise.all([
+      fetchCurrentPricing(),
+      fetchBillingAccount(),
+      fetchOrganizationQuote(100),
+    ])
       .then(([priceRes, accRes, quoteRes]) => {
         setPricing(priceRes);
         setAccount(accRes);
@@ -80,12 +81,11 @@ export default function PlansAndPricingPage() {
     setCheckoutBanner(null);
     try {
       const order = await createCheckoutOrder("INDIVIDUAL", 1);
-      // In development/sandbox mode, verify via server HMAC-SHA256 test signature
       const sigBundle = await fetchSandboxTestSignature(order.order_id);
       const updatedAccount = await verifyCheckoutPayment(sigBundle);
       setAccount(updatedAccount);
       setCheckoutBanner(
-        `Verified HMAC-SHA256 Payment (${sigBundle.razorpay_payment_id})! Individual Plan active at locked rate ₹${pricing.individual_price_inr}/month.`
+        `HMAC-SHA256 Verified Payment (${sigBundle.razorpay_payment_id}) — Individual Plan active at locked rate ₹${pricing.individual_price_inr}/month.`
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Checkout failed.");
@@ -94,7 +94,7 @@ export default function PlansAndPricingPage() {
     }
   };
 
-  const handleCreateAndSubscribeOrganization = async () => {
+  const handleOrganizationCheckout = async () => {
     setLoading(true);
     setError(null);
     setCheckoutBanner(null);
@@ -117,7 +117,7 @@ export default function PlansAndPricingPage() {
         purchased_seats: seats,
       });
       setCheckoutBanner(
-        `Organization Subscription Activated for ${seats} seats at ₹${orgQuote.final_monthly_inr}/month (25% bulk discount saved ₹${orgQuote.discount_amount_inr})!`
+        `Organization Subscription Activated for ${seats} seats at ₹${orgQuote.final_monthly_inr}/month (25% bulk discount saved ₹${orgQuote.discount_amount_inr}).`
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Organization checkout failed.");
@@ -145,183 +145,177 @@ export default function PlansAndPricingPage() {
   return (
     <div
       dir={isRtl ? "rtl" : "ltr"}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 overflow-x-hidden"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <BackButton fallbackHref="/schemes" />
+        <BackButton fallbackHref="/" />
 
         {account && (
-          <div className="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-950">
-            <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
+          <div className="brass-badge px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+            <Scale className="w-3.5 h-3.5" />
             <span>
               Free Successful Analyses Remaining:{" "}
               <strong>
                 {account.free_analyses_remaining} / {account.free_analyses_limit}
               </strong>
             </span>
-            <span className="text-indigo-400">·</span>
-            <span>
-              Plan:{" "}
-              <strong>
-                {account.has_unlimited_analysis_entitlement
-                  ? "Unlimited Active"
-                  : "Free Starter Tier"}
-              </strong>
-            </span>
           </div>
         )}
       </div>
 
-      {/* Sandbox Demo & Architectural Disclosure */}
-      <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 border border-indigo-400/40 text-xs space-y-2">
-        <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-indigo-300">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Interactive Sandbox Demo &amp; Architectural Disclosure</span>
-        </div>
-        <p className="text-gray-300 leading-relaxed text-[11px] sm:text-xs">
-          This pricing calculator, organization seat quota model, and checkout flow are demonstrated in <strong>Sandbox Demo Mode</strong> with server-side HMAC-SHA256 signature verification. Real payment gateway transactions and persistent multi-tenant account isolation will activate when production Razorpay credentials and a live PostgreSQL database are configured on the backend.
-        </p>
-      </div>
-
-      {/* Hero Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4F46E5]/10 text-[#4F46E5] text-xs font-bold uppercase tracking-wider">
-          <ShieldCheck className="w-4 h-4" />
-          Transparent Citizen &amp; Institutional Pricing
+      {/* Editorial Header */}
+      <div className="max-w-3xl space-y-3">
+        <span className="text-[11px] font-mono uppercase tracking-[0.16em] text-[#8C6D3B] font-bold">
+          Citizen Entitlement &amp; Institutional Licensing
         </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#17213F] tracking-tight">
-          Start with 2 Free Successful Analyses. Scale Across Your Campus or NGO.
+        <h1 className="font-editorial text-3xl sm:text-5xl font-semibold text-[#141815] leading-tight">
+          Transparent, Sustainable Public-Interest Pricing.
         </h1>
-        <p className="text-sm sm:text-base text-[#667085] leading-relaxed">
-          Ordinary scheme browsing and failed/incomplete requests are always free. After your{" "}
-          <strong>2 free successful policy analyses</strong>, unlock unlimited analyses for{" "}
-          <strong>₹{pricing.individual_price_inr}/month</strong> or equip your entire college
-          scholarship desk with an automatic <strong>25% bulk seat discount</strong>.
+        <p className="text-sm sm:text-base text-[#4A524C] leading-relaxed">
+          Every citizen receives{" "}
+          <strong className="text-[#141815]">
+            2 free successful policy analyses
+          </strong>
+          . Ordinary scheme browsing and failed or incomplete evaluations never
+          consume your allowance. Continue with unlimited analyses for{" "}
+          <strong className="text-[#141815]">
+            ₹{pricing.individual_price_inr}/month
+          </strong>
+          , or license seats for your college or NGO with an automatic{" "}
+          <strong className="text-[#141815]">25% bulk seat discount</strong>.
         </p>
       </div>
 
       {checkoutBanner && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-2xl p-4 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="sage-panel rounded-2xl p-4 text-xs sm:text-sm font-semibold text-[#163026] flex items-center gap-2.5">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span>{checkoutBanner}</span>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 text-xs sm:text-sm font-semibold">
+        <div className="bg-[#F2EADB] border border-[#D4C098] text-[#694F25] rounded-2xl p-4 text-xs sm:text-sm font-semibold">
           {error}
         </div>
       )}
 
-      {/* Glossy 3D-Perspective Pricing Cards Grid (Requirement H1 & H2) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch [perspective:1200px]">
-        {/* CARD 1: INDIVIDUAL PLAN */}
-        <div className="group relative rounded-3xl bg-gradient-to-br from-white via-white to-indigo-50/60 border border-indigo-200/80 p-6 sm:p-8 shadow-xl transition-transform duration-300 motion-safe:hover:[transform:rotateY(2deg)_translateY(-4px)] flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-[#4F46E5]">
-                Individual Citizen Plan
+      {/* Controlled 3D Architectural Pricing Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch architectural-stage">
+        {/* INDIVIDUAL PLAN (Warm Ivory Folio Card) */}
+        <div className="lg:col-span-5 pricing-tilt-left folio-card rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <span className="brass-badge px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                Individual Citizen Dossier
               </span>
-              <span className="text-xs font-medium text-gray-500">
-                Includes 2 Free Starter Analyses
+              <span className="text-xs font-mono text-[#6B726C]">
+                2 Free Analyses Included
               </span>
             </div>
 
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl sm:text-5xl font-extrabold text-[#17213F]">
+            <div className="flex items-baseline gap-2 pt-1">
+              <span className="font-editorial text-4xl sm:text-5xl font-semibold text-[#141815]">
                 ₹{pricing.individual_price_inr}
               </span>
-              <span className="text-sm text-[#667085] font-medium">
+              <span className="text-xs sm:text-sm text-[#6B726C] font-medium">
                 / user / month
               </span>
             </div>
 
-            <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
-              Ideal for students, farmers, and households navigating central and state
-              welfare schemes, NSP defect recovery, and personalized deadline tracking.
+            <p className="text-xs sm:text-sm text-[#4A524C] leading-relaxed">
+              Designed for individual students, smallholder farmers, and households
+              seeking unlimited eligibility evaluations, NSP defect recovery, and
+              application tracking.
             </p>
 
-            <ul className="space-y-2.5 text-xs sm:text-sm text-[#17213F] pt-2">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <ul className="space-y-3 text-xs sm:text-sm text-[#141815] pt-2 border-t border-[#D8D1C2]">
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#163026] shrink-0 mt-0.5" />
                 <span>
-                  <strong>2 free successful policy analyses</strong> included for every new account
+                  <strong>2 free successful analyses</strong> included for every new
+                  account
                 </span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#163026] shrink-0 mt-0.5" />
                 <span>
-                  Failed, cancelled, or incomplete requests <strong>never</strong> count against your quota
+                  Failed, cancelled, or incomplete requests are never billed or counted
                 </span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#163026] shrink-0 mt-0.5" />
                 <span>
-                  Unlimited eligibility evaluations, action plans &amp; Scholarship Defect Rescue
+                  Full access to Scholarship Defect Rescue &amp; printable office letters
                 </span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#163026] shrink-0 mt-0.5" />
                 <span>
-                  Locked subscriber price guarantee (no silent rate increases)
+                  Price-lock protection: existing subscribers are never silently charged
+                  higher rates
                 </span>
               </li>
             </ul>
           </div>
 
-          <div className="pt-4 border-t border-indigo-100 space-y-3">
-            <div className="text-[11px] text-gray-500 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
+          <div className="space-y-3 pt-4 border-t border-[#D8D1C2]">
+            <div className="text-[11px] text-[#6B726C] flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-[#8C6D3B] shrink-0" />
               <span>
-                You will pay ₹{pricing.individual_price_inr}/month. Cancel anytime in 1 click.
+                Server-verified Razorpay HMAC-SHA256 checkout · Cancel anytime
               </span>
             </div>
             <button
               type="button"
               onClick={handleIndividualCheckout}
               disabled={loading}
-              className="w-full py-3 px-5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs sm:text-sm font-bold shadow-md transition cursor-pointer disabled:opacity-50"
+              className="btn-forest w-full py-3.5 px-5 rounded-xl text-xs sm:text-sm font-bold cursor-pointer disabled:opacity-50"
             >
               {account?.individual_subscription_status === "ACTIVE"
-                ? `Active Plan (Locked at ₹${account.locked_subscription_price_inr}/mo)`
+                ? `Active Subscription (Locked at ₹${account.locked_subscription_price_inr}/mo)`
                 : `Subscribe to Individual Plan — ₹${pricing.individual_price_inr}/month`}
             </button>
           </div>
         </div>
 
-        {/* CARD 2: ORGANIZATION PLAN WITH LIVE 25%-OFF SEAT CALCULATOR */}
-        <div className="group relative rounded-3xl bg-gradient-to-br from-[#17213F] via-[#1E293B] to-[#312E81] text-white border border-indigo-400/30 p-6 sm:p-8 shadow-2xl transition-transform duration-300 motion-safe:hover:[transform:rotateY(-2deg)_translateY(-4px)] flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
+        {/* ORGANIZATION PLAN (Deep Forest Monolith with Brass Accents & Live 25% Calculator) */}
+        <div className="lg:col-span-7 pricing-tilt-right forest-panel rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8">
+          <div className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/40">
-                Organization &amp; Campus Plan
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#C5A572]/20 text-[#C5A572] border border-[#C5A572]/40">
+                Institutional &amp; Campus Desk Plan
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">
-                Automatic {orgQuote.discount_percent}% Bulk Seat Discount
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-baseline gap-2">
-              <span className="text-4xl sm:text-5xl font-extrabold text-white">
-                ₹{orgQuote.final_monthly_inr}
-              </span>
-              <span className="text-sm text-indigo-200">
-                / month for {orgQuote.seats} seats
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#E6ECE7]/15 text-[#E6ECE7] border border-[#E6ECE7]/30">
+                Fixed {orgQuote.discount_percent}% Bulk Seat Discount
               </span>
             </div>
 
-            {/* Live Dynamic Seat Calculator */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 space-y-3 text-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-4 pt-1">
+              <div className="flex items-baseline gap-2">
+                <span className="font-editorial text-4xl sm:text-5xl font-semibold text-[#F7F4EC]">
+                  ₹{orgQuote.final_monthly_inr}
+                </span>
+                <span className="text-xs sm:text-sm text-[#D5E0D7]">
+                  / month for {orgQuote.seats} seats
+                </span>
+              </div>
+              <span className="font-mono text-xs text-[#C5A572]">
+                Effective: ₹{orgQuote.effective_per_seat_inr} / seat / mo
+              </span>
+            </div>
+
+            {/* Tactile Inset Seat Calculator */}
+            <div className="rounded-2xl bg-[#0F221A]/85 border border-[#C5A572]/30 p-5 space-y-4 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <label
-                  htmlFor="seat-quantity-input"
-                  className="font-bold text-indigo-100 flex items-center gap-1.5"
+                  htmlFor="org-seat-input"
+                  className="font-bold text-[#F7F4EC] flex items-center gap-2"
                 >
-                  <Users className="w-4 h-4 text-indigo-300" />
-                  <span>Adjustable Seat Quantity:</span>
+                  <Users className="w-4 h-4 text-[#C5A572]" />
+                  <span>Configure Institutional Seat Quantity:</span>
                 </label>
                 <input
-                  id="seat-quantity-input"
+                  id="org-seat-input"
                   type="number"
                   min={1}
                   max={100000}
@@ -329,48 +323,44 @@ export default function PlansAndPricingPage() {
                   onChange={(e) =>
                     setSeats(Math.max(1, parseInt(e.target.value || "1", 10)))
                   }
-                  className="w-28 rounded-lg bg-slate-900/90 border border-indigo-300/40 px-3 py-1.5 text-sm font-bold text-white text-center"
+                  className="w-28 rounded-lg bg-[#163026] border border-[#C5A572]/50 px-3 py-1.5 text-sm font-mono font-bold text-[#F7F4EC] text-center"
                 />
               </div>
 
               <input
                 type="range"
-                aria-label="Seat Quantity Slider"
+                aria-label="Institutional Seat Slider"
                 min={5}
                 max={500}
                 step={5}
                 value={Math.min(500, seats)}
                 onChange={(e) => setSeats(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-400 cursor-pointer"
+                className="w-full accent-[#C5A572] cursor-pointer"
               />
 
-              {/* Exact Mathematical Breakdown */}
-              <div className="space-y-1.5 pt-2 border-t border-white/10 text-indigo-100">
+              <div className="space-y-2 pt-3 border-t border-white/10 text-[#D5E0D7]">
                 <div className="flex justify-between">
-                  <span>Current Individual Price:</span>
-                  <span className="font-mono font-semibold">
-                    ₹{orgQuote.unit_price_inr} / seat
-                  </span>
+                  <span>Current Individual Unit Rate:</span>
+                  <span className="font-mono">₹{orgQuote.unit_price_inr} / seat</span>
                 </div>
                 <div className="flex justify-between">
                   <span>
-                    Original Monthly Total ({orgQuote.seats} × ₹{orgQuote.unit_price_inr}):
+                    Original Monthly Total ({orgQuote.seats} × ₹
+                    {orgQuote.unit_price_inr}):
                   </span>
-                  <span className="font-mono line-through text-indigo-300">
+                  <span className="font-mono line-through text-[#99A89E]">
                     ₹{orgQuote.original_total_inr}
                   </span>
                 </div>
-                <div className="flex justify-between text-emerald-300 font-semibold">
-                  <span>{orgQuote.discount_percent}% Organization Discount:</span>
+                <div className="flex justify-between text-[#C5A572] font-semibold">
+                  <span>
+                    {orgQuote.discount_percent}% Institutional Discount (Original × 25%):
+                  </span>
                   <span className="font-mono">- ₹{orgQuote.discount_amount_inr}</span>
                 </div>
-                <div className="flex justify-between text-sm font-extrabold text-white pt-1 border-t border-white/10">
-                  <span>Final Monthly Organization Price (75%):</span>
+                <div className="flex justify-between text-sm font-bold text-[#F7F4EC] pt-2 border-t border-white/10">
+                  <span>Final Monthly Organization Total (Original × 75%):</span>
                   <span className="font-mono">₹{orgQuote.final_monthly_inr} / mo</span>
-                </div>
-                <div className="flex justify-between text-[11px] text-indigo-200">
-                  <span>Effective Price Per Seat:</span>
-                  <span className="font-mono">₹{orgQuote.effective_per_seat_inr} / seat</span>
                 </div>
               </div>
             </div>
@@ -381,102 +371,98 @@ export default function PlansAndPricingPage() {
               type="text"
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
-              placeholder="Organization / College Name..."
-              className="w-full rounded-xl bg-white/10 border border-white/20 px-3.5 py-2 text-xs text-white placeholder:text-indigo-200"
+              placeholder="Enter College, Scholarship Cell, or NGO Name..."
+              className="w-full rounded-xl bg-[#0F221A]/80 border border-[#C5A572]/35 px-4 py-2.5 text-xs text-[#F7F4EC] placeholder:text-[#99A89E]"
             />
             <button
               type="button"
-              onClick={handleCreateAndSubscribeOrganization}
+              onClick={handleOrganizationCheckout}
               disabled={loading}
-              className="w-full py-3 px-5 rounded-xl bg-white hover:bg-indigo-50 text-[#17213F] text-xs sm:text-sm font-extrabold shadow-lg transition cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 px-5 rounded-xl bg-[#C5A572] hover:bg-[#D4B685] text-[#0F221A] text-xs sm:text-sm font-extrabold transition cursor-pointer disabled:opacity-50"
             >
-              Purchase {orgQuote.seats} Organization Seats — ₹{orgQuote.final_monthly_inr}/month
+              Provision {orgQuote.seats} Institutional Seats — ₹
+              {orgQuote.final_monthly_inr}/month
             </button>
           </div>
         </div>
       </div>
 
-      {/* Organization Admin Seat Management Dashboard (Part E3) */}
+      {/* Organization Seat Roster & Audit Dashboard */}
       {orgDashboard && (
-        <section className="bg-white rounded-2xl border border-[#E5E7EB] p-6 sm:p-8 shadow-2xs space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <Building2 className="w-5 h-5 text-[#4F46E5]" />
+        <section className="folio-card rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8D1C2] pb-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-[#163026]" />
               <div>
-                <h2 className="text-lg font-bold text-[#17213F]">
-                  Organization Seat &amp; Billing Dashboard: {orgDashboard.name}
+                <h2 className="font-editorial text-xl font-semibold text-[#141815]">
+                  Institutional Seat Administration: {orgDashboard.name}
                 </h2>
-                <p className="text-xs text-[#667085]">
+                <p className="text-xs font-mono text-[#6B726C]">
                   Org ID: {orgDashboard.org_id} · Admin: {orgDashboard.admin_user_id}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-              <span className="px-3 py-1 rounded-full bg-indigo-50 text-[#4F46E5] border border-indigo-200">
-                Purchased: {orgDashboard.purchased_seats}
+            <div className="flex flex-wrap gap-2 text-xs font-bold">
+              <span className="brass-badge px-3 py-1 rounded-md">
+                Purchased Seats: {orgDashboard.purchased_seats}
               </span>
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Assigned/Invited: {orgDashboard.assigned_or_invited_seats}
+              <span className="px-3 py-1 rounded-md bg-[#E6ECE7] text-[#163026] border border-[#CFDBD1]">
+                Assigned: {orgDashboard.assigned_or_invited_seats}
               </span>
-              <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
+              <span className="px-3 py-1 rounded-md bg-[#EFECE2] text-[#141815] border border-[#D8D1C2]">
                 Available: {orgDashboard.available_seats}
               </span>
             </div>
           </div>
 
-          <form onSubmit={handleAssignSeat} className="flex flex-wrap gap-2">
+          <form onSubmit={handleAssignSeat} className="flex flex-wrap gap-2.5">
             <input
               type="email"
               required
               value={memberEmail}
               onChange={(e) => setMemberEmail(e.target.value)}
-              placeholder="Invite or assign seat by member email (e.g., clerk@college.edu)..."
-              className="flex-1 min-w-[220px] rounded-xl border border-gray-300 px-3.5 py-2 text-xs text-[#17213F]"
+              placeholder="Assign seat to counselor or student email (e.g., scholarship-desk@college.edu)..."
+              className="flex-1 min-w-[240px] rounded-xl border border-[#BFB6A4] bg-[#FCFBF7] px-3.5 py-2.5 text-xs text-[#141815]"
             />
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold cursor-pointer"
+              className="btn-forest inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
             >
-              <UserPlus className="w-3.5 h-3.5" />
+              <UserPlus className="w-3.5 h-3.5 text-[#C5A572]" />
               <span>Assign Seat</span>
             </button>
           </form>
 
           {orgDashboard.seats_roster?.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase text-gray-500">
-                Assigned &amp; Invited Seats Roster
-              </h3>
-              <div className="divide-y border rounded-xl">
-                {orgDashboard.seats_roster.map((s: any) => (
-                  <div
-                    key={s.seat_id}
-                    className="p-3 flex flex-wrap items-center justify-between gap-2 text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-[#17213F]">{s.member_email}</span>
-                      <span className="ms-2 px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[10px]">
-                        {s.status}
-                      </span>
-                    </div>
-                    {s.status !== "REVOKED" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          revokeOrganizationSeat(orgDashboard.org_id, s.seat_id).then(
-                            setOrgDashboard
-                          )
-                        }
-                        className="inline-flex items-center gap-1 text-red-600 hover:underline font-semibold cursor-pointer"
-                      >
-                        <UserX className="w-3.5 h-3.5" />
-                        <span>Revoke Access</span>
-                      </button>
-                    )}
+            <div className="divide-y divide-[#D8D1C2] border border-[#D8D1C2] rounded-xl bg-[#FCFBF7]">
+              {orgDashboard.seats_roster.map((s: any) => (
+                <div
+                  key={s.seat_id}
+                  className="p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs"
+                >
+                  <div>
+                    <span className="font-bold text-[#141815]">{s.member_email}</span>
+                    <span className="ms-2 px-2 py-0.5 rounded bg-[#E6ECE7] text-[#163026] font-mono text-[10px]">
+                      {s.status}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  {s.status !== "REVOKED" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        revokeOrganizationSeat(orgDashboard.org_id, s.seat_id).then(
+                          setOrgDashboard
+                        )
+                      }
+                      className="inline-flex items-center gap-1 text-[#8B261D] hover:underline font-bold cursor-pointer"
+                    >
+                      <UserX className="w-3.5 h-3.5" />
+                      <span>Revoke Seat</span>
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </section>

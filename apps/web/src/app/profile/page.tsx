@@ -129,57 +129,57 @@ export default function ProfilePage() {
 
       {/* Header */}
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider">
-          <User className="w-3.5 h-3.5" />
-          {t("nav.demoProfile")}
+        <div className="inline-flex items-center gap-2 brass-badge px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+          <User className="w-3.5 h-3.5 text-[#8C6D3B]" />
+          <span>{t("nav.demoProfile")}</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-[#17213F] tracking-tight">
+        <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#141815] tracking-tight">
           {t("profile.title")}
         </h1>
-        <p className="text-sm text-[#667085]">
+        <p className="text-xs sm:text-sm text-[#4A524C] leading-relaxed max-w-2xl">
           {t("profile.subtitle")}
         </p>
       </div>
 
       {/* Preset Switcher Banner */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-gray-700 font-medium">
-          <Sparkles className="w-4 h-4 text-indigo-600" />
+      <div className="folio-card rounded-3xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3.5">
+        <div className="flex items-center gap-2 text-xs text-[#141815] font-bold">
+          <Sparkles className="w-4 h-4 text-[#8C6D3B]" />
           <span>{t("profile.presetsTitle")}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => loadDemoProfile("farmer")}
-            className="text-xs px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition-colors"
+            className="btn-parchment text-xs px-3.5 py-2 rounded-xl font-bold cursor-pointer"
           >
             🌾 Telangana Farmer (TS)
           </button>
           <button
             type="button"
             onClick={() => loadDemoProfile("student")}
-            className="text-xs px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition-colors"
+            className="btn-parchment text-xs px-3.5 py-2 rounded-xl font-bold cursor-pointer"
           >
             🎓 SC Student (DL)
           </button>
           <button
             type="button"
             onClick={() => loadDemoProfile("vulnerable_family")}
-            className="text-xs px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition-colors"
+            className="btn-parchment text-xs px-3.5 py-2 rounded-xl font-bold cursor-pointer"
           >
             🏠 Rural EWS Family (UP)
           </button>
           <button
             type="button"
             onClick={() => loadDemoProfile("senior_citizen")}
-            className="text-xs px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition-colors"
+            className="btn-parchment text-xs px-3.5 py-2 rounded-xl font-bold cursor-pointer"
           >
             🧓 Senior Citizen 70+ (Universal Route)
           </button>
           <button
             type="button"
             onClick={clearProfile}
-            className="text-xs px-3 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium transition-colors"
+            className="text-xs px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold border border-slate-200 transition-all cursor-pointer"
           >
             Clear Form
           </button>
@@ -187,7 +187,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Form */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+      <div className="card-3d rounded-3xl overflow-hidden">
         <div className="p-6 sm:p-8 space-y-8">
           {/* Section 1: Basic Demographics */}
           <div>
@@ -821,13 +821,13 @@ export default function ProfilePage() {
         )}
 
         {/* Action Footer */}
-        <div className="bg-[#F8FAFC] border-t border-gray-200 p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-slate-50 border-t border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={handleValidate}
               disabled={isValidating}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-2xs transition-colors cursor-pointer btn-3d"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isValidating ? "animate-spin" : ""}`} />
               {t("profile.validateBtn")}
@@ -837,9 +837,9 @@ export default function ProfilePage() {
               type="button"
               onClick={handleRunPolicyAnalysis}
               disabled={workflowRunning}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 text-[#4F46E5] text-xs font-bold shadow-2xs transition-colors cursor-pointer btn-3d"
             >
-              <Play className="w-3.5 h-3.5 fill-indigo-600" />
+              <Play className="w-3.5 h-3.5 fill-[#4F46E5]" />
               <span>Run Policy Analysis</span>
             </button>
           </div>
@@ -847,9 +847,9 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={handleSaveAndDiscover}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer btn-3d"
           >
-            {t("profile.saveBtn")}
+            <span>{t("profile.saveBtn")}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -857,16 +857,16 @@ export default function ProfilePage() {
 
       {/* Policy Analysis Execution & 402 Upgrade Modal */}
       {showWorkflowModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="card-3d bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-5 h-5 text-[#4F46E5]" />
                 <div>
-                  <h3 className="font-bold text-base text-gray-900">
+                  <h3 className="font-extrabold text-base text-[#0F172A]">
                     Policy Analysis Autonomous Navigation
                   </h3>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500 font-medium">
                     Deterministic Citizen Evaluation &amp; Ministry Verification
                   </span>
                 </div>
@@ -874,14 +874,15 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowWorkflowModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer p-1"
+                aria-label="Close"
               >
                 ×
               </button>
             </div>
 
             {upgradeRequiredError ? (
-              <div className="bg-amber-50 border border-amber-300 rounded-2xl p-6 text-center space-y-4">
+              <div className="bg-amber-50/90 border border-amber-300 rounded-3xl p-6 text-center space-y-4 card-3d">
                 <Lock className="w-8 h-8 text-amber-700 mx-auto" />
                 <div className="space-y-1">
                   <h4 className="text-base font-bold text-amber-950">
@@ -895,7 +896,7 @@ export default function ProfilePage() {
                 <div className="pt-2 flex justify-center gap-3">
                   <Link
                     href="/pricing"
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#4F46E5] text-white text-xs font-bold shadow-md hover:bg-[#4338CA] transition"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#4F46E5] text-white text-xs font-bold shadow-md hover:bg-[#4338CA] transition btn-3d"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>View Plans &amp; Subscribe (₹19/mo)</span>
@@ -903,7 +904,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowWorkflowModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50"
+                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
                   >
                     Dismiss
                   </button>

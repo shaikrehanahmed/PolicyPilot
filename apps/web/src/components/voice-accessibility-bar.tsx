@@ -12,7 +12,7 @@ import {
   Send,
   Trash2,
   AlertCircle,
-  Sparkles,
+  Scale,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -24,35 +24,10 @@ import { useProfile } from "@/lib/profile-context";
 import { AssistantMessageItem, LanguageCode } from "@/lib/types";
 
 interface VoiceAccessibilityBarProps {
-  /** Optional callback to also copy recognized speech into a page-specific box (e.g. Rescue input) */
   onTranscriptText?: (spokenText: string) => void;
-  /** Optional page text to read aloud when user clicks Read Page Summary */
   textToReadAloud?: string;
   compact?: boolean;
   onCloseDrawer?: () => void;
-}
-
-interface SpeechRecognitionEvent {
-  resultIndex: number;
-  results: {
-    length: number;
-    [index: number]: {
-      [index: number]: { transcript: string };
-    };
-  };
-}
-
-interface SpeechRecognitionInstance {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  start: () => void;
-  stop: () => void;
-  onstart: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: { error?: string }) => void) | null;
-  onend: (() => void) | null;
 }
 
 export function VoiceAccessibilityBar({
@@ -74,10 +49,9 @@ export function VoiceAccessibilityBar({
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [ttsNotice, setTtsNotice] = useState<string | null>(null);
 
-  // Audio playback state (Cloud HTML5 Audio or Verified Device Voice)
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
   const [lastSpokenText, setLastSpokenText] = useState<string>("");
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stopAllMedia = () => {
@@ -132,7 +106,6 @@ export function VoiceAccessibilityBar({
     const cleanText = textToSpeak.trim();
     if (!cleanText) return;
 
-    // Prevent overlapping audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -197,7 +170,6 @@ export function VoiceAccessibilityBar({
     speakNextChunk();
   };
 
-  // Submit question to backend context-aware assistant (keeps modal open for multi-turn chat)
   const submitQuestion = async (rawQuestion: string, allowDuplicate = false) => {
     const trimmed = rawQuestion.trim();
     if (!trimmed || isProcessing) return;
@@ -222,7 +194,6 @@ export function VoiceAccessibilityBar({
       onTranscriptText(trimmed);
     }
 
-    // Extract current scheme slug if on /schemes/[id]
     const schemeSlugMatch = pathname?.startsWith("/schemes/")
       ? pathname.replace("/schemes/", "").split("/")[0]
       : null;
@@ -252,7 +223,6 @@ export function VoiceAccessibilityBar({
       };
       setHistory((prev) => [...prev, assistantMsg]);
 
-      // Execute explicit action directive ONLY when returned by backend
       if (res.action.action_type === "STOP_AUDIO") {
         stopAllMedia();
       } else if (res.action.action_type === "GO_BACK") {
@@ -268,14 +238,13 @@ export function VoiceAccessibilityBar({
       setVoiceError(
         err instanceof Error
           ? err.message
-          : "Unable to reach PolicyPilot Assistant. Please check your connection."
+          : "Unable to reach PolicyPilot Counsel. Please verify backend connectivity."
       );
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Manual single-turn microphone capture (never secretly records continuously)
   const handleToggleMic = () => {
     setVoiceError(null);
 
@@ -286,16 +255,13 @@ export function VoiceAccessibilityBar({
     }
 
     if (typeof window === "undefined") return;
-    const win = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionInstance;
-      webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
-    };
     const SpeechRecognitionAPI =
-      win.SpeechRecognition || win.webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
       setVoiceError(
-        "Speech recognition is not supported by this browser. Please type your question in the editable box below."
+        "Browser speech recognition is unavailable on this device. Please type your inquiry below."
       );
       return;
     }
@@ -311,28 +277,27 @@ export function VoiceAccessibilityBar({
         setIsListening(true);
       };
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimOrFinal = "";
+      recognition.onresult = (event: any) => {
+        let spoken = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          interimOrFinal += event.results[i][0].transcript;
+          spoken += event.results[i][0].transcript;
         }
-        if (interimOrFinal.trim()) {
-          // Place recognized speech into the editable input box so user can review/edit or press Send
-          setInputDraft(interimOrFinal.trim());
+        if (spoken.trim()) {
+          setInputDraft(spoken.trim());
         }
       };
 
-      recognition.onerror = (event: { error?: string }) => {
+      recognition.onerror = (event: any) => {
         setIsListening(false);
         const code = event?.error || "unknown";
         if (code === "not-allowed" || code === "permission-denied") {
           setVoiceError(
-            "Microphone permission was denied. Please allow microphone access or type your question below."
+            "Microphone access was declined. Please permit microphone access or type your inquiry below."
           );
         } else if (code === "no-speech") {
-          setVoiceError("No speech was detected. Tap the microphone to try again or type below.");
+          setVoiceError("No speech detected. Tap Speak Question again or type below.");
         } else {
-          setVoiceError(`Speech recognition error (${code}). You can edit or type your question below.`);
+          setVoiceError(`Speech capture interrupted (${code}). Please edit or type below.`);
         }
       };
 
@@ -344,7 +309,7 @@ export function VoiceAccessibilityBar({
       recognition.start();
     } catch {
       setIsListening(false);
-      setVoiceError("Could not start microphone. Please use the text box below.");
+      setVoiceError("Could not initialize microphone. Please use the text field below.");
     }
   };
 
@@ -381,20 +346,21 @@ export function VoiceAccessibilityBar({
     <section
       dir={isRtl ? "rtl" : "ltr"}
       aria-label={t("voice_modal_title")}
-      className={`rounded-2xl border border-indigo-200 bg-indigo-50/70 ${
+      className={`sage-panel rounded-2xl ${
         compact ? "p-3.5" : "p-5"
-      } space-y-3 shadow-xs`}
+      } space-y-3.5`}
     >
-      {/* Top Header & Close/Stop Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2.5">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#4F46E5] shrink-0" />
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#CFDBD1] pb-2.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-[#163026] text-[#C5A572] flex items-center justify-center shrink-0">
+            <Scale className="w-3.5 h-3.5" />
+          </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-[#17213F]">
+            <h3 className="text-xs sm:text-sm font-bold text-[#141815]">
               {t("voice_modal_title")}
             </h3>
             {!compact && (
-              <p className="text-[11px] text-[#667085]">{t("voice_modal_subtitle")}</p>
+              <p className="text-[11px] text-[#4A524C]">{t("voice_modal_subtitle")}</p>
             )}
           </div>
         </div>
@@ -407,7 +373,7 @@ export function VoiceAccessibilityBar({
                 setHistory([]);
                 setLastSubmittedText("");
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 cursor-pointer"
+              className="btn-parchment inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer"
             >
               <Trash2 className="w-3 h-3" />
               <span>{t("voice_clear_history")}</span>
@@ -422,7 +388,7 @@ export function VoiceAccessibilityBar({
                 onCloseDrawer();
               }}
               aria-label={t("btn_close")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-[11px] font-semibold text-gray-800 hover:bg-gray-100 cursor-pointer"
+              className="btn-parchment inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>{t("btn_close")}</span>
@@ -431,9 +397,9 @@ export function VoiceAccessibilityBar({
         </div>
       </div>
 
-      {/* Multi-Turn Conversation Transcript */}
+      {/* Multi-Turn Conversation Ledger */}
       {history.length > 0 && (
-        <div className="max-h-64 overflow-y-auto space-y-2.5 bg-white/90 rounded-xl p-3 border border-indigo-100">
+        <div className="max-h-64 overflow-y-auto space-y-3 bg-[#FCFBF7] rounded-xl p-3.5 border border-[#D8D1C2]">
           {history.map((item, idx) => (
             <div
               key={idx}
@@ -442,10 +408,10 @@ export function VoiceAccessibilityBar({
               }`}
             >
               <div
-                className={`max-w-[90%] rounded-xl px-3.5 py-2.5 text-xs whitespace-pre-wrap leading-relaxed ${
+                className={`max-w-[92%] rounded-xl px-4 py-2.5 text-xs whitespace-pre-wrap leading-relaxed ${
                   item.role === "user"
-                    ? "bg-[#4F46E5] text-white font-medium"
-                    : "bg-slate-100 text-[#17213F] border border-slate-200"
+                    ? "bg-[#163026] text-[#F7F4EC] font-medium"
+                    : "bg-[#EFECE2] text-[#141815] border border-[#D8D1C2]"
                 }`}
               >
                 {item.content}
@@ -454,9 +420,9 @@ export function VoiceAccessibilityBar({
                 <button
                   type="button"
                   onClick={() => speakTranslatedText(item.content, lang)}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#4F46E5] hover:underline cursor-pointer"
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#163026] hover:underline cursor-pointer"
                 >
-                  <Volume2 className="w-3 h-3" />
+                  <Volume2 className="w-3 h-3 text-[#8C6D3B]" />
                   <span>{t("tts_play")}</span>
                 </button>
               )}
@@ -465,7 +431,7 @@ export function VoiceAccessibilityBar({
         </div>
       )}
 
-      {/* Editable Speech & Text Question Input Form (Supports Unlimited Consecutive Turns) */}
+      {/* Editable Speech & Text Question Input */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -477,10 +443,10 @@ export function VoiceAccessibilityBar({
           type="button"
           onClick={handleToggleMic}
           aria-label={isListening ? t("voice_stop_mic") : t("voice_start_mic")}
-          className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
+          className={`inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
             isListening
-              ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
-              : "bg-white hover:bg-gray-50 text-[#17213F] border border-gray-300"
+              ? "bg-[#8B261D] text-white animate-pulse"
+              : "btn-parchment"
           }`}
         >
           {isListening ? (
@@ -490,7 +456,7 @@ export function VoiceAccessibilityBar({
             </>
           ) : (
             <>
-              <Mic className="w-4 h-4 text-[#4F46E5]" />
+              <Mic className="w-4 h-4 text-[#163026]" />
               <span>{t("voice_start_mic")}</span>
             </>
           )}
@@ -503,22 +469,22 @@ export function VoiceAccessibilityBar({
           placeholder={
             isListening
               ? t("voice_listening")
-              : "Ask e.g. 'Explain PM-KISAN in Telugu', 'What documents do I need?', or 'Check scheme updates'..."
+              : "Ask e.g. 'Explain PM-KISAN in Telugu', 'What documents do I need?', or 'Show verified scheme updates'..."
           }
-          className="flex-1 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#17213F] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+          className="flex-1 rounded-xl border border-[#BFB6A4] bg-[#FCFBF7] px-3.5 py-2.5 text-xs sm:text-sm text-[#141815] focus:outline-none focus:ring-2 focus:ring-[#163026]"
         />
 
         <button
           type="submit"
           disabled={!inputDraft.trim() || isProcessing}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold disabled:opacity-50 cursor-pointer shrink-0"
+          className="btn-forest inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer shrink-0"
         >
-          <Send className="w-3.5 h-3.5" />
+          <Send className="w-3.5 h-3.5 text-[#C5A572]" />
           <span>{isProcessing ? "..." : t("voice_send_btn")}</span>
         </button>
       </form>
 
-      {/* Audio Playback & Natural Question Suggestions */}
+      {/* Prompt Suggestions & Audio Controls */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
@@ -531,23 +497,22 @@ export function VoiceAccessibilityBar({
               key={sample}
               type="button"
               onClick={() => submitQuestion(sample, true)}
-              className="text-[11px] bg-white hover:bg-indigo-100/70 text-[#17213F] border border-indigo-200 px-2.5 py-1 rounded-full transition cursor-pointer"
+              className="text-[11px] bg-[#FCFBF7] hover:bg-[#EFECE2] text-[#141815] border border-[#D8D1C2] px-2.5 py-1 rounded-md transition cursor-pointer"
             >
               {sample}
             </button>
           ))}
         </div>
 
-        {/* TTS Play / Pause / Resume / Stop / Replay Controls */}
         {latestAssistantReply && (
-          <div className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+          <div className="inline-flex items-center gap-1 bg-[#FCFBF7] border border-[#D8D1C2] rounded-lg p-1">
             {ttsState === "idle" && (
               <button
                 type="button"
                 onClick={() => speakTranslatedText(latestAssistantReply, lang)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-[#17213F] hover:bg-gray-100 cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold text-[#163026] hover:bg-[#EFECE2] cursor-pointer"
               >
-                <Volume2 className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <Volume2 className="w-3.5 h-3.5 text-[#8C6D3B]" />
                 <span>{t("tts_play")}</span>
               </button>
             )}
@@ -556,7 +521,7 @@ export function VoiceAccessibilityBar({
               <button
                 type="button"
                 onClick={handlePauseTTS}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold text-[#694F25] bg-[#F2EADB] cursor-pointer"
               >
                 <Pause className="w-3.5 h-3.5" />
                 <span>{t("tts_pause")}</span>
@@ -567,7 +532,7 @@ export function VoiceAccessibilityBar({
               <button
                 type="button"
                 onClick={handleResumeTTS}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold text-[#163026] bg-[#E6ECE7] cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5" />
                 <span>{t("tts_resume")}</span>
@@ -578,7 +543,7 @@ export function VoiceAccessibilityBar({
               <button
                 type="button"
                 onClick={stopAllMedia}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-red-700 hover:bg-red-50 cursor-pointer"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold text-[#8B261D] hover:bg-red-50 cursor-pointer"
               >
                 <Square className="w-3 h-3" />
                 <span>{t("tts_stop")}</span>
@@ -589,8 +554,7 @@ export function VoiceAccessibilityBar({
               <button
                 type="button"
                 onClick={() => speakTranslatedText(lastSpokenText, lang)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer"
-                title={t("tts_replay")}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-[#4A524C] hover:bg-[#EFECE2] cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>{t("tts_replay")}</span>
@@ -601,14 +565,14 @@ export function VoiceAccessibilityBar({
       </div>
 
       {ttsNotice && (
-        <div className="text-[11px] text-slate-600 bg-white/80 px-3 py-1.5 rounded border border-slate-200">
+        <div className="text-[11px] text-[#4A524C] bg-[#FCFBF7] px-3 py-1.5 rounded-lg border border-[#D8D1C2]">
           {ttsNotice}
         </div>
       )}
 
       {voiceError && (
-        <div className="flex items-center gap-1.5 text-xs text-amber-900 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+        <div className="flex items-center gap-2 text-xs text-[#694F25] bg-[#F2EADB] border border-[#D4C098] px-3.5 py-2 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-[#8C6D3B] shrink-0" />
           <span>{voiceError}</span>
         </div>
       )}
