@@ -306,10 +306,10 @@ export const UI_STRINGS: Record<string, Record<LanguageCode, string>> = {
     "ur": "فعال تشخیصی پروفائل"
   },
   "detail.agentWorkflow": {
-    "en": "Run LangGraph Agent",
-    "te": "లాంగ్‌గ్రాఫ్ ఏజెంట్‌ని ప్రారంభించండి",
-    "hi": "लैंगग्राफ एजेंट चलाएं",
-    "ur": "لینگ گراف ایجنٹ چلائیں"
+    "en": "Run Policy Analysis",
+    "te": "విధాన విశ్లేషణను ప్రారంభించండి",
+    "hi": "नीति विश्लेषण चलाएं",
+    "ur": "پالیسی کا تجزیہ شروع کریں"
   },
   "detail.back": {
     "en": "Back to Schemes",
@@ -546,10 +546,10 @@ export const UI_STRINGS: Record<string, Record<LanguageCode, string>> = {
     "ur": "فعال تشخیصی پروفائل"
   },
   "detail_agentWorkflow": {
-    "en": "Run LangGraph Agent",
-    "te": "లాంగ్‌గ్రాఫ్ ఏజెంట్‌ని ప్రారంభించండి",
-    "hi": "लैंगग्राफ एजेंट चलाएं",
-    "ur": "لینگ گراف ایجنٹ چلائیں"
+    "en": "Run Policy Analysis",
+    "te": "విధాన విశ్లేషణను ప్రారంభించండి",
+    "hi": "नीति विश्लेषण चलाएं",
+    "ur": "پالیسی کا تجزیہ شروع کریں"
   },
   "detail_back": {
     "en": "Back to Schemes",
@@ -1247,6 +1247,12 @@ export const UI_STRINGS: Record<string, Record<LanguageCode, string>> = {
     "hi": "योजना अपडेट",
     "ur": "اسکیم اپ ڈیٹس"
   },
+  "nav.pricing": {
+    "en": "Pricing",
+    "te": "ధరల వివరాలు",
+    "hi": "मूल्य निर्धारण",
+    "ur": "قیمتیں"
+  },
   "nav.voiceAssistant": {
     "en": "Ask Assistant",
     "te": "వాయిస్ సహాయకుడు",
@@ -1294,6 +1300,12 @@ export const UI_STRINGS: Record<string, Record<LanguageCode, string>> = {
     "te": "డెమో మోడ్ (నిబంధనల ఇంజిన్ & AI)",
     "hi": "डेमो मोड (नियम इंजन और एआई)",
     "ur": "ڈیمو موڈ (قواعد انجن اور اے آئی)"
+  },
+  "nav_pricing": {
+    "en": "Pricing",
+    "te": "ధరల వివరాలు",
+    "hi": "मूल्य निर्धारण",
+    "ur": "قیمتیں"
   },
   "nav_profile": {
     "en": "Citizen Profile",

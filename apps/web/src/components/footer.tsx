@@ -50,6 +50,21 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/rescue" className="hover:text-[#4F46E5] transition-colors">
+                {t("nav.rescue")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/updates" className="hover:text-[#4F46E5] transition-colors">
+                {t("nav.updates")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/pricing" className="hover:text-[#4F46E5] transition-colors">
+                {t("nav.pricing")}
+              </Link>
+            </li>
+            <li>
               <Link href="/profile" className="hover:text-[#4F46E5] transition-colors">
                 {t("nav.profile")}
               </Link>
@@ -118,6 +133,22 @@ export function Footer() {
               </a>
             </li>
           </ul>
+        </div>
+      </div>
+
+      {/* System Architecture & Honest Prototype Data Disclosure (Requirement H4) */}
+      <div className="border-t border-[#E5E7EB] bg-[#F8FAFC] py-4 px-4 text-xs text-[#667085]">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-[#17213F]">PolicyPilot System Status:</span>
+            <span>
+              Deterministic Rules Evaluator Active · In-Memory User Session Persistence · Razorpay Test Sandbox Verified
+            </span>
+          </div>
+          <div className="text-[11px] text-gray-500">
+            For production PostgreSQL persistence, configure DATABASE_URL in services/api/.env
+          </div>
         </div>
       </div>
 

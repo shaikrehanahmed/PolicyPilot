@@ -1,375 +1,354 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  FileCheck,
-  Search,
-  ShieldAlert,
+  Bell,
+  CheckCircle2,
+  Compass,
+  CreditCard,
+  FileText,
   ShieldCheck,
   Sparkles,
   UserCheck,
-  BookOpen,
-  Bell,
 } from "lucide-react";
-import { fetchSchemes } from "@/lib/api";
-import { Scheme, formatCurrencyINR } from "@/lib/types";
-import { useProfile } from "@/lib/profile-context";
+import { fetchBillingAccount, fetchSchemes } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n-context";
+import { VoiceAccessibilityBar } from "@/components/voice-accessibility-bar";
+import { Scheme } from "@/lib/types";
+
+const HOME_COPY = {
+  badge: {
+    en: "Deterministic Rules Engine · Official Gazette Citations · Zero-PII Triage",
+    te: "నిబంధనల ఆధారిత ఇంజిన్ · అధికారిక గెజిట్ ఆధారాలు · గోప్యతా రక్షణ",
+    hi: "नियम-आधारित इंजन · आधिकारिक गजट प्रमाण · शून्य-PII सुरक्षा",
+    ur: "قواعد پر مبنی انجن · سرکاری گزٹ شواہد · رازداری کا تحفظ",
+  },
+  title: {
+    en: "Navigate Government Schemes & Resolve Portal Defects with Verified Evidence",
+    te: "అధికారిక ఆధారాలతో ప్రభుత్వ పథకాలను అన్వేషించండి & దరఖాస్తు లోపాలను పరిష్కరించండి",
+    hi: "सत्यापित प्रमाणों के साथ सरकारी योजनाओं की पात्रता जांचें और पोर्टल दोष सुधारें",
+    ur: "تصدیق شدہ شواہد کے ساتھ سرکاری اسکیموں کی اہلیت جانچیں اور درخواست کی خرابیاں دور کریں",
+  },
+  subtitle: {
+    en: "PolicyPilot never guesses your eligibility. We evaluate your profile using deterministic statutory rules, cite exact ministry clauses, track your applications, and guide you out of National Scholarship Portal (NSP) and PFMS payment defects.",
+    te: "PolicyPilot మీ అర్హతను ఊహించదు. ఖచ్చితమైన ప్రభుత్వ నిబంధనలతో మీ ప్రొఫైల్ను పరిశీలించి, అధికారిక ఆధారాలతో నెక్స్ట్ స్టెప్స్ మరియు స్కాలర్షిప్ రెస్క్యూ పరిష్కారాలను అందిస్తుంది.",
+    hi: "PolicyPilot आपकी पात्रता का अनुमान नहीं लगाता। हम आधिकारिक नियमों से आपकी प्रोफ़ाइल का मूल्यांकन करते हैं, सटीक मंत्रालय संदर्भ दिखाते हैं, और NSP छात्रवृत्ति व PFMS भुगतान समस्याओं का समाधान देते हैं।",
+    ur: "PolicyPilot آپ کی اہلیت کا اندازہ نہیں لگاتا بلکہ سرکاری قواعد اور مستند شواہد کی بنیاد پر مرحلہ وار رہنمائی فراہم کرتا ہے۔",
+  },
+  cta_analyze: {
+    en: "Run Policy Analysis",
+    te: "పాలసీ విశ్లేషణ రన్ చేయండి (Run Policy Analysis)",
+    hi: "नीति विश्लेषण चलाएं (Run Policy Analysis)",
+    ur: "پالیسی تجزیہ چلائیں (Run Policy Analysis)",
+  },
+  cta_explore: {
+    en: "Browse All Available Schemes",
+    te: "అన్ని ప్రభుత్వ పథకాలను చూడండి",
+    hi: "सभी उपलब्ध योजनाएं देखें",
+    ur: "تمام دستیاب اسکیمیں دیکھیں",
+  },
+  cta_rescue: {
+    en: "Open Scholarship Defect Rescue",
+    te: "స్కాలర్షిప్ రెస్క్యూ తెరవండి",
+    hi: "छात्रवृत्ति दोष निवारण (Rescue)",
+    ur: "اسکالرشپ ریسکیو کھولیں",
+  },
+};
+
+const DEFAULT_VERIFIED_SCHEMES: Scheme[] = [
+  {
+    id: "b1000000-0000-0000-0000-000000000001",
+    slug: "pm-kisan",
+    name: "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    category: "agriculture",
+    level: "CENTRAL",
+    department: "Ministry of Agriculture and Farmers Welfare, Govt of India",
+    description: "Centrally sponsored income support of ₹6,000 per year directly via DBT to all landholding farmer families across the country.",
+    active: true,
+    verification_status: "VERIFIED",
+  },
+  {
+    id: "b2000000-0000-0000-0000-000000000002",
+    slug: "pm-jay",
+    name: "Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana (AB-PMJAY)",
+    category: "healthcare",
+    level: "CENTRAL",
+    department: "National Health Authority, Govt of India",
+    description: "Health cover of ₹5,00,000 per family per year for secondary and tertiary care hospitalization, plus universal coverage for all seniors aged 70+.",
+    active: true,
+    verification_status: "VERIFIED",
+  },
+  {
+    id: "b3000000-0000-0000-0000-000000000003",
+    slug: "pmay-g",
+    name: "Pradhan Mantri Awaas Yojana - Gramin (PMAY-G)",
+    category: "housing",
+    level: "CENTRAL",
+    department: "Ministry of Rural Development, Govt of India",
+    description: "Financial assistance for construction of pucca house to rural houseless families living in kutcha houses.",
+    active: true,
+    verification_status: "VERIFIED",
+  },
+  {
+    id: "b4000000-0000-0000-0000-000000000004",
+    slug: "nsp-post-matric",
+    name: "Post-Matric Scholarship for SC Students",
+    category: "education",
+    level: "CENTRAL",
+    department: "Ministry of Social Justice and Empowerment, Govt of India",
+    description: "Centrally Sponsored Post-Matric Scholarship Scheme for SC Students studying in recognized post-secondary courses with parental income up to ₹2,50,000.",
+    active: true,
+    verification_status: "VERIFIED",
+  },
+  {
+    id: "b5000000-0000-0000-0000-000000000005",
+    slug: "rythu-bharosa",
+    name: "Rythu Bharosa (Telangana Agriculture Investment Support)",
+    category: "agriculture",
+    level: "STATE",
+    state: "TS",
+    department: "Department of Agriculture, Govt of Telangana",
+    description: "Agricultural investment assistance of ₹12,000 per acre annually to landholding farmers possessing digital Pattadar Passbooks.",
+    active: true,
+    verification_status: "VERIFIED",
+  },
+];
 
 export default function HomePage() {
-  const { profile, loadDemoProfile } = useProfile();
-  const { t, localizeScheme, isRtl } = useLanguage();
-  const [schemes, setSchemes] = useState<Scheme[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { lang, isRtl, localizeScheme } = useLanguage();
+  const [schemes, setSchemes] = useState<Scheme[]>(DEFAULT_VERIFIED_SCHEMES);
+  const [account, setAccount] = useState<any>(null);
 
   useEffect(() => {
     fetchSchemes()
-      .then(setSchemes)
-      .catch((e) => console.error(e))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (res && res.length > 0) setSchemes(res.slice(0, 5));
+      })
+      .catch(() => {});
+    fetchBillingAccount()
+      .then(setAccount)
+      .catch(() => {});
   }, []);
 
-  const journeySteps = [
-    {
-      num: "01",
-      title: "Citizen Profile",
-      desc: "Normalized demographic bands: State, Income, Land, Category",
-      icon: UserCheck,
-      color: "bg-blue-50 text-blue-600 border-blue-200",
-    },
-    {
-      num: "02",
-      title: "Scheme Discovery",
-      desc: "Lexical & category ranking over verified Gazette rules",
-      icon: Search,
-      color: "bg-indigo-50 text-indigo-600 border-indigo-200",
-    },
-    {
-      num: "03",
-      title: "Rules Evaluation",
-      desc: "Deterministic Python logic (Zero LLM, Met/Not Met/Unknown)",
-      icon: ShieldCheck,
-      color: "bg-emerald-50 text-emerald-600 border-emerald-200",
-    },
-    {
-      num: "04",
-      title: "Verified Evidence",
-      desc: "Direct clause-by-clause citations from official gazettes",
-      icon: BookOpen,
-      color: "bg-amber-50 text-amber-600 border-amber-200",
-    },
-    {
-      num: "05",
-      title: "Action Roadmap",
-      desc: "Personalized step sequence, document checklist & portal links",
-      icon: FileCheck,
-      color: "bg-purple-50 text-purple-600 border-purple-200",
-    },
-  ];
+  const copy = (key: keyof typeof HOME_COPY) =>
+    HOME_COPY[key][lang] || HOME_COPY[key].en;
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-16 py-8">
+    <div
+      dir={isRtl ? "rtl" : "ltr"}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12"
+    >
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 text-center md:text-left">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold tracking-wide uppercase">
-              <Sparkles className="w-3.5 h-3.5" />
-              {t("home.badge")}
-            </div>
+      <section className="glossy-card rounded-3xl p-6 sm:p-10 lg:p-12 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#4F46E5]/10 text-[#4F46E5] text-xs font-bold">
+            <ShieldCheck className="w-4 h-4 shrink-0" />
+            <span>{copy("badge")}</span>
+          </div>
 
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-[#17213F] tracking-tight leading-[1.15]">
-              {t("home.heroTitle1")} <br />
-              <span className="text-[#4F46E5]">{t("home.heroTitle2")}</span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-[#667085] max-w-2xl leading-relaxed">
-              {t("home.heroDesc")}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3.5 pt-2">
-              <Link
-                href="/schemes"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-sm shadow-xs transition-all"
-              >
-                {t("home.exploreSchemes")}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/rescue"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold text-sm transition-all shadow-2xs"
-              >
-                <ShieldAlert className="w-4 h-4 text-amber-700" />
-                {t("home.rescueMode")}
-              </Link>
-              <Link
-                href="/updates"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 font-semibold text-sm transition-all shadow-2xs"
-              >
-                <Bell className="w-4 h-4 text-[#4F46E5]" />
-                {t("home.schemeUpdates")}
-              </Link>
-            </div>
-
-            {/* Quick Demo Walkthrough Switcher */}
-            <div className="pt-4 border-t border-gray-200">
-              <span className="text-xs text-gray-500 font-medium block mb-2">
-                {t("home.presetsLabel")}
+          {account && (
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold hover:bg-emerald-100 transition"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>
+                {account.has_unlimited_analysis_entitlement
+                  ? "Unlimited Policy Analyses Active"
+                  : `${account.free_analyses_remaining} of ${account.free_analyses_limit} Free Successful Analyses Available`}
               </span>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => loadDemoProfile("farmer")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
-                    profile.occupation === "farmer"
-                      ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  🌾 Telangana Farmer (TS)
-                </button>
-                <button
-                  onClick={() => loadDemoProfile("student")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
-                    profile.occupation === "student"
-                      ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  🎓 SC Student (Undergrad)
-                </button>
-                <button
-                  onClick={() => loadDemoProfile("vulnerable_family")}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors cursor-pointer ${
-                    profile.occupation === "daily-wage worker" || profile.occupation === "laborer"
-                      ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  🏠 Low-Income Family (EWS)
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Architecture Graphic */}
-          <div className="lg:col-span-5">
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-md space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-semibold text-gray-800">
-                    {t("home.activeSession")}
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                  {profile.state || "Central"} • {profile.category || "General"}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">{t("home.occupation")}</span>
-                  <span className="font-semibold text-gray-900 capitalize">
-                    {profile.occupation || "Not set"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">{t("home.annualIncome")}</span>
-                  <span className="font-semibold text-gray-900">
-                    {profile.annual_income_inr ? `₹${formatCurrencyINR(profile.annual_income_inr)}` : "Not set"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-50">
-                  <span className="text-gray-500">{t("home.landholding")}</span>
-                  <span className="font-semibold text-gray-900">
-                    {profile.landholding_acres != null ? `${profile.landholding_acres} Acres` : "Not provided"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-gray-500">{t("home.assistanceGoal")}</span>
-                  <span className="font-semibold text-indigo-600 max-w-[200px] truncate text-right">
-                    {profile.goal || "General Eligibility"}
-                  </span>
-                </div>
-              </div>
-
-              <Link
-                href="/schemes"
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] font-semibold text-xs transition-colors"
-              >
-                {t("home.matchSchemesBtn")}
-              </Link>
-            </div>
-          </div>
+            </Link>
+          )}
         </div>
-      </section>
 
-      {/* Hero Journey Visual (CSS/SVG Interactive Component) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xs">
-          <div className="text-center max-w-xl mx-auto mb-8">
-            <h2 className="text-xs uppercase tracking-widest text-indigo-600 font-bold">
-              The Citizen Navigation Flow
-            </h2>
-            <h3 className="text-2xl font-bold text-[#17213F] mt-1">
-              From Profile to Verified Application
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-            {journeySteps.map((step) => {
-              const Icon = step.icon;
-              return (
-                <div
-                  key={step.num}
-                  className="bg-[#F8FAFC] rounded-xl p-5 border border-gray-200 hover:border-indigo-300 transition-all flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-gray-400">
-                        {step.num}
-                      </span>
-                      <div className={`p-2 rounded-lg border ${step.color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <h4 className="font-bold text-sm text-[#17213F]">{step.title}</h4>
-                    <p className="text-xs text-[#667085] leading-relaxed">{step.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="max-w-4xl space-y-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#17213F] tracking-tight leading-tight">
+            {copy("title")}
+          </h1>
+          <p className="text-sm sm:text-base lg:text-lg text-[#667085] leading-relaxed">
+            {copy("subtitle")}
+          </p>
         </div>
-      </section>
 
-      {/* Technical Architecture Separation: Rules vs AI */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Card 1: Deterministic Engine */}
-          <div className="bg-white rounded-xl border border-emerald-200 p-6 shadow-xs relative overflow-hidden">
-            <div className="w-1.5 h-full bg-emerald-500 absolute left-0 top-0" />
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-[#17213F]">
-                  {t("home.rulesTitle")}
-                </h3>
-                <span className="text-xs text-emerald-700 font-medium">
-                  {t("home.rulesSubtitle")}
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-[#667085] leading-relaxed mb-4">
-              {t("home.rulesDesc")}
-            </p>
-            <div className="text-[11px] bg-[#F8FAFC] rounded-md p-3 text-gray-600 font-mono space-y-1">
-              <div>✓ income &lt;= ceiling → MET / NOT_MET</div>
-              <div>✓ state == TS → Exact Domicile Match</div>
-              <div>✓ missing landholding → UNKNOWN (Incomplete Assessment)</div>
-            </div>
-          </div>
+        {/* Primary Action Buttons (Renamed "Run LangGraph" -> "Run Policy Analysis" per Requirement H3) */}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs sm:text-sm font-bold shadow-md transition"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{copy("cta_analyze")}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
 
-          {/* Card 2: Grounded AI Explanation */}
-          <div className="bg-white rounded-xl border border-indigo-200 p-6 shadow-xs relative overflow-hidden">
-            <div className="w-1.5 h-full bg-indigo-500 absolute left-0 top-0" />
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-700">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-[#17213F]">
-                  {t("home.aiTitle")}
-                </h3>
-                <span className="text-xs text-indigo-700 font-medium">
-                  {t("home.aiSubtitle")}
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-[#667085] leading-relaxed mb-4">
-              {t("home.aiDesc")}
-            </p>
-            <div className="text-[11px] bg-[#F8FAFC] rounded-md p-3 text-gray-600 font-mono space-y-1">
-              <div>✓ Explains missing data in plain English</div>
-              <div>✓ Quotes verified Gazette excerpts only</div>
-              <div>✓ Transparent deterministic fallback if no API key</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Verified Schemes Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-[#17213F]">{t("home.verifiedSchemesTitle")}</h2>
-            <p className="text-xs text-[#667085]">
-              {t("home.verifiedSchemesDesc")}
-            </p>
-          </div>
           <Link
             href="/schemes"
-            className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1"
+            className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-white hover:bg-gray-50 text-[#17213F] border border-gray-300 text-xs sm:text-sm font-bold shadow-2xs transition"
           >
-            {t("home.viewAllSchemes")} ({schemes.length}) →
+            <Compass className="w-4 h-4 text-[#4F46E5]" />
+            <span>{copy("cta_explore")}</span>
+          </Link>
+
+          <Link
+            href="/rescue"
+            className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs sm:text-sm font-bold transition"
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-700" />
+            <span>{copy("cta_rescue")}</span>
           </Link>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
-            ))}
+        {/* Conversational Voice & Chat Assistant Bar */}
+        <div className="pt-2">
+          <VoiceAccessibilityBar />
+        </div>
+      </section>
+
+      {/* 4-Pillar Core Capabilities Bento Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <Link
+          href="/schemes"
+          className="bg-white rounded-2xl border border-[#E5E7EB] p-6 space-y-3 shadow-2xs hover:border-[#4F46E5] transition flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center">
+              <Compass className="w-5 h-5" />
+            </div>
+            <h2 className="text-base font-bold text-[#17213F]">
+              1. Scheme Discovery &amp; Profile Ranking
+            </h2>
+            <p className="text-xs text-[#667085] leading-relaxed">
+              Browse all verified schemes by default, or rank them against your Citizen
+              Profile to separate Eligible, Partially Eligible, and Excluded schemes.
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {schemes.slice(0, 3).map((scheme) => {
-              const { displayName, displayDescription } = localizeScheme(scheme);
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#4F46E5] pt-2">
+            Explore Schemes <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/rescue"
+          className="bg-white rounded-2xl border border-[#E5E7EB] p-6 space-y-3 shadow-2xs hover:border-[#4F46E5] transition flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h2 className="text-base font-bold text-[#17213F]">
+              2. Scholarship &amp; DBT Defect Rescue
+            </h2>
+            <p className="text-xs text-[#667085] leading-relaxed">
+              Stuck on &ldquo;Marked Defective by INO&rdquo; or &ldquo;PFMS Rejected&rdquo;?
+              Block fatal Fresh-application withdrawal mistakes and generate an office letter.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 pt-2">
+            Diagnose Application <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/updates"
+          className="bg-white rounded-2xl border border-[#E5E7EB] p-6 space-y-3 shadow-2xs hover:border-[#4F46E5] transition flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <Bell className="w-5 h-5" />
+            </div>
+            <h2 className="text-base font-bold text-[#17213F]">
+              3. Scheme Updates &amp; Tracking Center
+            </h2>
+            <p className="text-xs text-[#667085] leading-relaxed">
+              Track Recently Visited schemes, confirm your personal &ldquo;Applied&rdquo;
+              status, inspect official Results Guidance, and manage verified alerts.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 pt-2">
+            Open Tracking Center <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/pricing"
+          className="bg-white rounded-2xl border border-[#E5E7EB] p-6 space-y-3 shadow-2xs hover:border-[#4F46E5] transition flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <h2 className="text-base font-bold text-[#17213F]">
+              4. Citizen &amp; Campus Subscriptions
+            </h2>
+            <p className="text-xs text-[#667085] leading-relaxed">
+              Start with 2 free successful analyses. Upgrade for ₹19/month or equip your
+              college scholarship cell with a 25% bulk seat discount.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 pt-2">
+            View Plans &amp; Calculator <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+      </section>
+
+      {/* Featured Verified Schemes Preview */}
+      {schemes.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-xl font-bold text-[#17213F]">
+                Verified Government Schemes in Repository ({schemes.length})
+              </h2>
+              <p className="text-xs text-[#667085]">
+                Every criterion is deterministically evaluated and linked to Tier-1 official
+                ministry guidelines.
+              </p>
+            </div>
+            <Link
+              href="/schemes"
+              className="text-xs font-bold text-[#4F46E5] hover:underline inline-flex items-center gap-1"
+            >
+              View All &amp; Rank by Profile <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {schemes.slice(0, 3).map((s) => {
+              const loc = localizeScheme(s);
               return (
-                <div
-                  key={scheme.id}
-                  className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                <Link
+                  key={s.id}
+                  href={`/schemes/${s.slug}`}
+                  className="bg-white rounded-2xl border border-[#E5E7EB] p-5 space-y-3 shadow-2xs hover:border-[#4F46E5] transition flex flex-col justify-between"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
-                        {scheme.category}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-50 text-[#4F46E5] border border-indigo-200">
+                        {s.level} {s.state ? `(${s.state})` : ""} · {s.category}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {scheme.verification_status}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        VERIFIED
                       </span>
                     </div>
-
-                    <h3 className="font-bold text-base text-[#17213F] leading-snug">
-                      {displayName}
+                    <h3 className="text-sm font-bold text-[#17213F]">
+                      {loc.displayName}
                     </h3>
-
                     <p className="text-xs text-[#667085] line-clamp-3 leading-relaxed">
-                      {displayDescription}
+                      {loc.displayDescription}
                     </p>
                   </div>
-
-                <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500 font-medium">
-                    {scheme.criteria_count} Criteria • {scheme.documents_count} Docs
-                  </span>
-                  <Link
-                    href={`/schemes/${scheme.slug}`}
-                    className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1"
-                  >
-                    {t("home.assessEligibility")}
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-[#4F46E5]">
+                    <span>Inspect Eligibility &amp; Documents</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }

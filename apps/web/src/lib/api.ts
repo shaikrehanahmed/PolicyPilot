@@ -7,6 +7,11 @@ import {
   EligibilityResult,
   EvidenceChunk,
   LanguageCode,
+  NotificationPreferences,
+  OrganizationCalculatorRequest,
+  OrganizationCalculatorResponse,
+  PricingCatalogResponse,
+  RankedSchemeDiscoveryItem,
   RescueDiagnoseRequest,
   RescueDiagnoseResponse,
   RescuePreset,
@@ -14,10 +19,22 @@ import {
   Source,
   SourceChangeCheckResult,
   SystemHealth,
+  TrackingCenterResponse,
   TTSCapabilities,
   TTSSynthesizeResponse,
+  UserApplicationStatus,
   WorkflowRunResponse,
 } from "./types";
+
+export function getSessionUserId(): string {
+  if (typeof window === "undefined") return "demo-default-citizen";
+  let uid = localStorage.getItem("policypilot_user_id");
+  if (!uid) {
+    uid = `citizen_${Math.random().toString(36).substring(2, 10)}`;
+    localStorage.setItem("policypilot_user_id", uid);
+  }
+  return uid;
+}
 
 export function getApiBase(): string {
   const envUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
@@ -50,6 +67,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const headers: Record<string, string> = {
     Accept: "application/json",
+    "X-User-ID": getSessionUserId(),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -266,3 +284,242 @@ export async function synthesizeSpeechAudio(
   });
 }
 
+export async function fetchPricingCatalog(): Promise<PricingCatalogResponse> {
+  return request<PricingCatalogResponse>("/api/v1/pricing/catalog");
+}
+
+export async function calculateOrganizationPricing(
+  payload: OrganizationCalculatorRequest
+): Promise<OrganizationCalculatorResponse> {
+  return request<OrganizationCalculatorResponse>(
+    "/api/v1/pricing/calculate-organization",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+// --- Scheme Tracking, My Applications & Notifications (Parts B & C) ---
+
+export async function fetchTrackingState(
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>("/api/v1/tracking/state", {
+    headers: { "X-User-ID": uid },
+  });
+}
+
+export async function recordSchemeVisit(
+  schemeSlug: string,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>("/api/v1/tracking/visit", {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify({ scheme_slug: schemeSlug }),
+  });
+}
+
+export async function removeRecentVisit(
+  schemeSlug: string,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>(
+    `/api/v1/tracking/visit/${encodeURIComponent(schemeSlug)}`,
+    {
+      method: "DELETE",
+      headers: { "X-User-ID": uid },
+    }
+  );
+}
+
+export async function clearAllRecentVisits(
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>("/api/v1/tracking/visit", {
+    method: "DELETE",
+    headers: { "X-User-ID": uid },
+  });
+}
+
+export async function updateSchemeApplicationStatus(
+  schemeSlug: string,
+  userConfirmedStatus: UserApplicationStatus,
+  notes?: string,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>("/api/v1/tracking/status", {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify({
+      scheme_slug: schemeSlug,
+      user_confirmed_status: userConfirmedStatus,
+      notes,
+    }),
+  });
+}
+
+export async function removeTrackedApplication(
+  schemeSlug: string,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>(
+    `/api/v1/tracking/applications/${encodeURIComponent(schemeSlug)}`,
+    {
+      method: "DELETE",
+      headers: { "X-User-ID": uid },
+    }
+  );
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>("/api/v1/tracking/preferences", {
+    method: "PUT",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify(prefs),
+  });
+}
+
+export async function markNotificationRead(
+  notificationId: string,
+  userIdOverride?: string
+): Promise<TrackingCenterResponse> {
+  const uid = userIdOverride || getSessionUserId();
+  return request<TrackingCenterResponse>(
+    `/api/v1/tracking/notifications/${encodeURIComponent(notificationId)}/read`,
+    {
+      method: "POST",
+      headers: { "X-User-ID": uid },
+    }
+  );
+}
+
+export async function rankSchemesByProfile(
+  profile: CitizenProfile,
+  includeUnverified: boolean = false
+): Promise<RankedSchemeDiscoveryItem[]> {
+  return request<RankedSchemeDiscoveryItem[]>("/api/v1/tracking/rank-schemes", {
+    method: "POST",
+    body: JSON.stringify({ profile, include_unverified: includeUnverified }),
+  });
+}
+
+// --- Billing, Subscriptions, Organizations & Razorpay Checkout (Parts D, E, F) ---
+
+export async function fetchCurrentPricing(): Promise<any> {
+  return request("/api/v1/billing/pricing");
+}
+
+export async function fetchOrganizationQuote(seats: number): Promise<any> {
+  return request(`/api/v1/billing/quote/organization?seats=${encodeURIComponent(String(seats))}`);
+}
+
+export async function fetchBillingAccount(userIdOverride?: string): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request("/api/v1/billing/account", {
+    headers: { "X-User-ID": uid },
+  });
+}
+
+export async function createCheckoutOrder(
+  planType: "INDIVIDUAL" | "ORGANIZATION",
+  seats: number = 1,
+  orgId?: string,
+  userIdOverride?: string
+): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request("/api/v1/billing/checkout/create-order", {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify({ plan_type: planType, seats, org_id: orgId }),
+  });
+}
+
+export async function fetchSandboxTestSignature(
+  orderId: string,
+  userIdOverride?: string
+): Promise<{
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}> {
+  const uid = userIdOverride || getSessionUserId();
+  return request(
+    `/api/v1/billing/checkout/sandbox-test-signature?order_id=${encodeURIComponent(orderId)}`,
+    {
+      method: "POST",
+      headers: { "X-User-ID": uid },
+    }
+  );
+}
+
+export async function verifyCheckoutPayment(
+  payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  },
+  userIdOverride?: string
+): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request("/api/v1/billing/checkout/verify", {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createOrganizationAccount(
+  name: string,
+  initialSeats: number,
+  userIdOverride?: string
+): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request("/api/v1/billing/organizations", {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify({ name, initial_seats: initialSeats }),
+  });
+}
+
+export async function assignOrganizationSeat(
+  orgId: string,
+  memberEmail: string,
+  memberUserId?: string,
+  userIdOverride?: string
+): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request(`/api/v1/billing/organizations/${encodeURIComponent(orgId)}/seats/assign`, {
+    method: "POST",
+    headers: { "X-User-ID": uid },
+    body: JSON.stringify({ member_email: memberEmail, member_user_id: memberUserId }),
+  });
+}
+
+export async function revokeOrganizationSeat(
+  orgId: string,
+  seatId: string,
+  userIdOverride?: string
+): Promise<any> {
+  const uid = userIdOverride || getSessionUserId();
+  return request(
+    `/api/v1/billing/organizations/${encodeURIComponent(orgId)}/seats/${encodeURIComponent(
+      seatId
+    )}/revoke`,
+    {
+      method: "POST",
+      headers: { "X-User-ID": uid },
+    }
+  );
+}

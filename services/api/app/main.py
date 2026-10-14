@@ -9,12 +9,15 @@ from .api import (
     action_plan_router,
     announcements_router,
     assistant_router,
+    billing_router,
     eligibility_router,
     health_router,
+    pricing_router,
     profile_router,
     rescue_router,
     schemes_router,
     sources_router,
+    tracking_router,
     tts_router,
     workflow_router,
 )
@@ -88,6 +91,9 @@ app.include_router(rescue_router, prefix="/api/v1")
 app.include_router(announcements_router, prefix="/api/v1")
 app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(tts_router, prefix="/api/v1")
+app.include_router(pricing_router, prefix="/api/v1")
+app.include_router(billing_router, prefix="/api/v1")
+app.include_router(tracking_router, prefix="/api/v1")
 
 
 @app.get("/")

@@ -402,3 +402,169 @@ export interface TTSSynthesizeResponse {
   limitation_notice?: string | null;
 }
 
+// --- Pricing & Organization Calculator Types ---
+export interface PlanFeature {
+  title: string;
+  included: boolean;
+  highlight?: boolean;
+}
+
+export interface PlanSummary {
+  id: string;
+  name: string;
+  tagline: string;
+  monthly_price_inr: number;
+  introductory_price_inr?: number | null;
+  free_analyses: number;
+  features: PlanFeature[];
+  badge?: string | null;
+  popular?: boolean;
+}
+
+export interface OrganizationCalculatorRequest {
+  seats: number;
+  billing_cycle?: string;
+}
+
+export interface OrganizationCalculatorResponse {
+  seats: number;
+  billing_cycle: string;
+  base_price_per_seat_inr: number;
+  discount_percentage: number;
+  gross_total_inr: number;
+  discount_amount_inr: number;
+  net_total_inr: number;
+  effective_per_seat_price_inr: number;
+  free_analyses_per_seat: number;
+  payment_gateway_status: string;
+  honesty_note: string;
+}
+
+export interface PricingCatalogResponse {
+  plans: PlanSummary[];
+  individual_intro_price_inr: number;
+  free_analyses_new_user: number;
+  org_base_seat_price_inr: number;
+  org_bulk_discount_percentage: number;
+  payment_gateway_status: string;
+  honesty_note: string;
+}
+
+// --- Tracking, Application Status & Ranked Discovery Types (Parts B & C) ---
+export type UserApplicationStatus =
+  | "NOT_APPLIED"
+  | "BOOKMARKED"
+  | "PREPARING_DOCUMENTS"
+  | "APPLIED"
+  | "MARKED_DEFECTIVE"
+  | "BENEFIT_RECEIVED";
+
+export type OfficialLifecycleStatus =
+  | "Active"
+  | "Deadline Extended"
+  | "Application Closed"
+  | "Results Announced"
+  | "Status Unverified";
+
+export interface NotificationPreferences {
+  scheme_updates_enabled: boolean;
+  deadline_warnings_enabled: boolean;
+  results_announcements_enabled: boolean;
+  defect_recovery_tips_enabled: boolean;
+  in_app_channel_enabled: boolean;
+  email_channel_requested: boolean;
+  preferred_lang: string;
+}
+
+export interface ResultsGuidanceOut {
+  has_published_results: boolean;
+  announcement_date?: string | null;
+  how_to_check: string;
+  official_results_portal_url?: string | null;
+  official_next_steps: string[];
+  distinction_disclaimer: string;
+}
+
+export interface EvidenceMetadataOut {
+  evidence_quote?: string | null;
+  source_title?: string | null;
+  source_url?: string | null;
+  last_verified_at?: string | null;
+  last_attempted_check_at?: string | null;
+  is_evidence_sufficient: boolean;
+}
+
+export interface TrackedSchemeRecordOut {
+  scheme_id: string;
+  scheme_slug: string;
+  scheme_name: string;
+  category: string;
+  level: string;
+  official_application_url?: string | null;
+  user_confirmed_status: UserApplicationStatus;
+  applied_at?: string | null;
+  user_status_updated_at?: string | null;
+  external_submission_disclaimer: string;
+  official_lifecycle_status: OfficialLifecycleStatus;
+  evidence: EvidenceMetadataOut;
+  results_guidance: ResultsGuidanceOut;
+  last_visited_at?: string | null;
+  visit_count: number;
+}
+
+export interface PersonalizedNotificationOut {
+  notification_id: string;
+  dedup_hash: string;
+  scheme_slug: string;
+  scheme_name: string;
+  event_type: string;
+  title: string;
+  message: string;
+  official_lifecycle_status: OfficialLifecycleStatus;
+  user_confirmed_status: UserApplicationStatus;
+  source_url?: string | null;
+  evidence_quote?: string | null;
+  last_verified_at?: string | null;
+  delivery_channel: string;
+  created_at: string;
+  read: boolean;
+}
+
+export interface TrackingCenterResponse {
+  user_id: string;
+  persistence_mode: string;
+  account_persistence_verified: boolean;
+  external_monitoring_active: boolean;
+  email_provider_configured: boolean;
+  last_successful_verification_at: string;
+  last_attempted_check_at: string;
+  persistence_disclosure: string;
+  preferences: NotificationPreferences;
+  recently_visited: TrackedSchemeRecordOut[];
+  my_applications: TrackedSchemeRecordOut[];
+  tracked_schemes: TrackedSchemeRecordOut[];
+  notifications: PersonalizedNotificationOut[];
+  duplicates_suppressed: number;
+}
+
+export type EligibilityStatus =
+  | "ELIGIBLE"
+  | "PARTIALLY_ELIGIBLE"
+  | "NOT_ELIGIBLE"
+  | "UNDETERMINED";
+
+export interface RankedSchemeDiscoveryItem {
+  scheme: Scheme;
+  discovery_bucket: "MATCHED_TO_PROFILE" | "INSUFFICIENT_INFORMATION" | "NOT_MATCHED";
+  eligibility_status: EligibilityStatus;
+  completeness: string;
+  met_count: number;
+  not_met_count: number;
+  unknown_count: number;
+  missing_profile_fields: string[];
+  why_this_result: string;
+  results_guidance: string;
+  official_lifecycle_status: OfficialLifecycleStatus;
+  last_verified_at?: string | null;
+  source_url?: string | null;
+}

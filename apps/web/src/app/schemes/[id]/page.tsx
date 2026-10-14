@@ -15,18 +15,25 @@ import {
   AlertTriangle,
   Play,
   ShieldCheck,
+  Check,
+  Calendar,
+  BookmarkCheck,
+  Clock,
 } from "lucide-react";
 import {
   evaluateEligibility,
   fetchScheme,
   generateActionPlan,
+  recordSchemeVisit,
   runWorkflow,
+  updateSchemeApplicationStatus,
 } from "@/lib/api";
 import {
   ActionPlan,
   EligibilityResult,
   EvidenceChunk,
   Scheme,
+  TrackedSchemeRecordOut,
   WorkflowRunResponse,
   formatCurrencyINR,
 } from "@/lib/types";
@@ -72,6 +79,28 @@ function SchemeDetailContent() {
   const [workflowRunning, setWorkflowRunning] = useState(false);
   const [workflowResult, setWorkflowResult] = useState<WorkflowRunResponse | null>(null);
   const [showWorkflowModal, setShowWorkflowModal] = useState(false);
+  const [trackingRecord, setTrackingRecord] = useState<TrackedSchemeRecordOut | null>(null);
+
+  useEffect(() => {
+    recordSchemeVisit(schemeSlug)
+      .then((res) => {
+        const found = res?.tracked_schemes?.find((t) => t.scheme_slug === schemeSlug);
+        if (found) setTrackingRecord(found);
+      })
+      .catch(() => {});
+  }, [schemeSlug]);
+
+  const handleToggleAppliedStatus = async () => {
+    const current = trackingRecord?.user_confirmed_status;
+    const target = current === "APPLIED" ? "NOT_APPLIED" : "APPLIED";
+    try {
+      const updated = await updateSchemeApplicationStatus(schemeSlug, target);
+      const found = updated?.tracked_schemes?.find((t) => t.scheme_slug === schemeSlug);
+      if (found) setTrackingRecord(found);
+    } catch (err) {
+      console.error("Failed to update application status:", err);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -178,7 +207,7 @@ function SchemeDetailContent() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
         >
           <Play className="w-3.5 h-3.5 fill-indigo-600" />
-          {t("detail.agentWorkflow")}
+          Run Policy Analysis
         </button>
       </div>
 
@@ -220,6 +249,116 @@ function SchemeDetailContent() {
         <p className="text-sm text-[#475467] leading-relaxed max-w-4xl">
           {displayDescription}
         </p>
+      </div>
+
+      {/* Scheme Tracking, Official Lifecycle Status & Results Guidance (Parts C1-C6) */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Official Lifecycle:
+            </span>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                trackingRecord?.official_lifecycle_status === "Active"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                  : trackingRecord?.official_lifecycle_status === "Deadline Extended"
+                  ? "bg-blue-50 text-blue-800 border-blue-300"
+                  : trackingRecord?.official_lifecycle_status === "Results Announced"
+                  ? "bg-purple-50 text-purple-800 border-purple-300"
+                  : trackingRecord?.official_lifecycle_status === "Application Closed"
+                  ? "bg-gray-100 text-gray-700 border-gray-300"
+                  : "bg-amber-50 text-amber-800 border-amber-300"
+              }`}
+            >
+              {trackingRecord?.official_lifecycle_status || "Active"}
+            </span>
+            {trackingRecord?.evidence?.last_verified_at && (
+              <span className="text-[11px] font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                Verified: {trackingRecord.evidence.last_verified_at.slice(0, 10)}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleAppliedStatus}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer border ${
+                trackingRecord?.user_confirmed_status === "APPLIED"
+                  ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
+                  : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <BookmarkCheck className="w-3.5 h-3.5" />
+              <span>
+                {trackingRecord?.user_confirmed_status === "APPLIED"
+                  ? "Marked as Applied"
+                  : "Mark as Applied"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Applied disclaimer and timestamp */}
+        {trackingRecord?.user_confirmed_status === "APPLIED" && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-950 flex items-start gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-semibold">
+                Marked as Applied
+                {trackingRecord.applied_at
+                  ? ` on ${trackingRecord.applied_at.slice(0, 10)}`
+                  : ""}
+              </p>
+              <p className="text-emerald-800 text-[11px] leading-relaxed">
+                {trackingRecord.external_submission_disclaimer ||
+                  "PolicyPilot records your self-reported 'Applied' status for personal tracking only and cannot independently verify submission or approval on external government portals."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Results Guidance Card (Part C5) */}
+        {trackingRecord?.results_guidance && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold text-[#17213F] flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                Results &amp; Verification Guidance
+              </span>
+              {trackingRecord.results_guidance.announcement_date && (
+                <span className="font-mono text-[11px] text-gray-500">
+                  Batch / Announcement: {trackingRecord.results_guidance.announcement_date}
+                </span>
+              )}
+            </div>
+            <p className="text-gray-700 leading-relaxed">
+              {trackingRecord.results_guidance.how_to_check}
+            </p>
+            {trackingRecord.results_guidance.official_next_steps &&
+              trackingRecord.results_guidance.official_next_steps.length > 0 && (
+                <ul className="list-disc ps-4 space-y-1 text-gray-700">
+                  {trackingRecord.results_guidance.official_next_steps.map((step, idx) => (
+                    <li key={idx}>{step}</li>
+                  ))}
+                </ul>
+              )}
+            {trackingRecord.results_guidance.official_results_portal_url && (
+              <a
+                href={trackingRecord.results_guidance.official_results_portal_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[#4F46E5] hover:underline font-semibold pt-1"
+              >
+                Official Verification Portal <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            <p className="text-[11px] text-gray-500 italic pt-1 border-t border-slate-200/80">
+              {trackingRecord.results_guidance.distinction_disclaimer}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Deterministic Eligibility Outcome Banner */}
@@ -632,10 +771,10 @@ function SchemeDetailContent() {
                 <Sparkles className="w-5 h-5 text-indigo-600" />
                 <div>
                   <h3 className="font-bold text-base text-gray-900">
-                    LangGraph Autonomous Navigation Workflow
+                    Policy Analysis Autonomous Navigation Workflow
                   </h3>
                   <span className="text-xs text-gray-500">
-                    6-Node Policy Pipeline (StateGraph with Meaningful Branching)
+                    6-Node Policy Pipeline (Deterministic Evaluator & Gazette Verification)
                   </span>
                 </div>
               </div>
@@ -651,7 +790,7 @@ function SchemeDetailContent() {
               <div className="py-12 text-center space-y-3">
                 <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs font-semibold text-gray-700">
-                  Executing LangGraph nodes asynchronously...
+                  Executing policy analysis pipeline asynchronously...
                 </p>
                 <p className="text-[11px] text-gray-400">
                   Normalizing Profile → Discovering Schemes → Evaluating Rules → Checking Documents → Verifying Sources → Preparing Action Plan

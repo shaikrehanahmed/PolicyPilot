@@ -13,12 +13,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import httpx
 
@@ -27,7 +26,7 @@ API_ROOT = Path(__file__).resolve().parent.parent
 if str(API_ROOT) not in sys.path:
     sys.path.insert(0, str(API_ROOT))
 
-from app.demo.repository import _DEMO_SCHEMES, _DEMO_SOURCES
+from app.demo.repository import _DEMO_SCHEMES, _DEMO_SOURCES  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("source_audit")
@@ -109,7 +108,7 @@ async def probe_url(client: httpx.AsyncClient, url: str) -> Dict[str, Any]:
 async def run_audit() -> Dict[str, Any]:
     """Runs full audit of sources, scheme criteria mappings, and evidence chunks."""
     logger.info("Starting PolicyPilot Authoritative Source Audit...")
-    
+
     # 1. Collect all unique URLs from demo sources
     urls_to_probe: Dict[str, str] = {}
     for src_key, src in _DEMO_SOURCES.items():

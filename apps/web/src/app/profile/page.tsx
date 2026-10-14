@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   User,
   CheckCircle2,
@@ -9,9 +10,12 @@ import {
   ArrowRight,
   Sparkles,
   RefreshCw,
+  Play,
+  CreditCard,
+  Lock,
 } from "lucide-react";
 import { useProfile } from "@/lib/profile-context";
-import { validateProfile } from "@/lib/api";
+import { validateProfile, fetchBillingAccount, runWorkflow } from "@/lib/api";
 import { BackButton } from "@/components/back-button";
 import { useLanguage } from "@/lib/i18n-context";
 
@@ -45,6 +49,15 @@ export default function ProfilePage() {
     recognized: string[];
   } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [account, setAccount] = useState<any>(null);
+  const [workflowRunning, setWorkflowRunning] = useState(false);
+  const [workflowResult, setWorkflowResult] = useState<any>(null);
+  const [showWorkflowModal, setShowWorkflowModal] = useState(false);
+  const [upgradeRequiredError, setUpgradeRequiredError] = useState<any>(null);
+
+  useEffect(() => {
+    fetchBillingAccount().then(setAccount).catch(() => {});
+  }, []);
 
   const handleValidate = async () => {
     setIsValidating(true);
@@ -69,6 +82,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRunPolicyAnalysis = async () => {
+    setWorkflowRunning(true);
+    setShowWorkflowModal(true);
+    setUpgradeRequiredError(null);
+    try {
+      const res = await runWorkflow(profile, profile.goal);
+      setWorkflowResult(res);
+      fetchBillingAccount().then(setAccount).catch(() => {});
+    } catch (e: any) {
+      const errDetail = e?.detail || e;
+      if (errDetail?.error === "SubscriptionRequired" || e?.status === 402) {
+        setUpgradeRequiredError(errDetail);
+      } else {
+        console.error("Workflow failed:", e);
+      }
+    } finally {
+      setWorkflowRunning(false);
+    }
+  };
+
   const handleSaveAndDiscover = async () => {
     await handleValidate();
     router.push("/schemes");
@@ -76,8 +109,22 @@ export default function ProfilePage() {
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <BackButton fallbackHref="/schemes" />
+
+        {account && (
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-950 hover:bg-indigo-100 transition shadow-2xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
+            <span>
+              {account.has_unlimited_analysis_entitlement
+                ? "Unlimited Policy Analyses Active"
+                : `Free Successful Analyses: ${account.free_analyses_remaining} / ${account.free_analyses_limit}`}
+            </span>
+          </Link>
+        )}
       </div>
 
       {/* Header */}
@@ -775,15 +822,27 @@ export default function ProfilePage() {
 
         {/* Action Footer */}
         <div className="bg-[#F8FAFC] border-t border-gray-200 p-6 flex flex-wrap items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={handleValidate}
-            disabled={isValidating}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isValidating ? "animate-spin" : ""}`} />
-            {t("profile.validateBtn")}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleValidate}
+              disabled={isValidating}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isValidating ? "animate-spin" : ""}`} />
+              {t("profile.validateBtn")}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRunPolicyAnalysis}
+              disabled={workflowRunning}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-indigo-600" />
+              <span>Run Policy Analysis</span>
+            </button>
+          </div>
 
           <button
             type="button"
@@ -795,6 +854,142 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* Policy Analysis Execution & 402 Upgrade Modal */}
+      {showWorkflowModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+                <div>
+                  <h3 className="font-bold text-base text-gray-900">
+                    Policy Analysis Autonomous Navigation
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    Deterministic Citizen Evaluation &amp; Ministry Verification
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWorkflowModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            {upgradeRequiredError ? (
+              <div className="bg-amber-50 border border-amber-300 rounded-2xl p-6 text-center space-y-4">
+                <Lock className="w-8 h-8 text-amber-700 mx-auto" />
+                <div className="space-y-1">
+                  <h4 className="text-base font-bold text-amber-950">
+                    Free Analyses Limit Reached
+                  </h4>
+                  <p className="text-xs text-amber-900 max-w-md mx-auto leading-relaxed">
+                    {upgradeRequiredError.message ||
+                      "You have consumed all free successful analyses. Subscribe to the Individual Plan (₹19/month) or join an Organization seat to run unlimited analyses."}
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center gap-3">
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#4F46E5] text-white text-xs font-bold shadow-md hover:bg-[#4338CA] transition"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>View Plans &amp; Subscribe (₹19/mo)</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowWorkflowModal(false)}
+                    className="px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ) : workflowRunning ? (
+              <div className="py-12 text-center space-y-3">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs font-semibold text-gray-700">
+                  Executing policy analysis pipeline asynchronously...
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  Normalizing Profile → Discovering Schemes → Evaluating Rules → Checking Documents → Preparing Action Plan
+                </p>
+              </div>
+            ) : workflowResult ? (
+              <div className="space-y-4 text-xs">
+                {workflowResult.usage_summary && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-950 flex items-center justify-between">
+                    <span className="font-semibold">Analysis Successful</span>
+                    <span className="font-mono text-[11px]">
+                      Analyses Used: {workflowResult.usage_summary.successful_analyses_used} /{" "}
+                      {workflowResult.usage_summary.free_analyses_limit}
+                    </span>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <h4 className="font-bold uppercase tracking-wider text-gray-600 text-[11px]">
+                    Execution Trajectory:
+                  </h4>
+                  {workflowResult.steps_log?.map((step: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-lg border border-gray-200 bg-[#F8FAFC] flex items-start gap-3"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                        ✓
+                      </div>
+                      <div className="space-y-0.5 flex-1">
+                        <div className="flex items-center justify-between">
+                          <strong className="text-gray-900 font-mono text-[11px]">
+                            {step.step_name}
+                          </strong>
+                          <span className="text-[10px] text-gray-400">
+                            {new Date(step.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 text-[11px]">{step.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {workflowResult.explanation && (
+                  <div className="bg-indigo-50/70 rounded-xl p-4 border border-indigo-200 text-indigo-950 space-y-1.5">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      Grounded Synthesis
+                    </span>
+                    <p className="leading-relaxed">{workflowResult.explanation.text}</p>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t flex justify-end gap-2">
+                  <Link
+                    href="/schemes"
+                    className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg text-xs font-semibold cursor-pointer"
+                  >
+                    View Ranked Schemes
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowWorkflowModal(false)}
+                    className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-rose-600">Workflow execution failed.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
